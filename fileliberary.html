@@ -1,0 +1,564 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub · File Library</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-storage-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f5f7fb; min-height: 100vh; padding: 30px; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .back-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .upload-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 10px 25px #6366f1;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .folder-section {
+            margin-bottom: 40px;
+        }
+        
+        .folder-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .file-card {
+            background: white;
+            border-radius: 24px;
+            padding: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid transparent;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .file-card:hover {
+            border-color: #6366f1;
+            transform: translateY(-3px);
+        }
+        
+        .file-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #f1f4f9;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+        }
+        
+        .file-icon.pdf { color: #ef4444; }
+        .file-icon.doc { color: #2563eb; }
+        .file-icon.image { color: #10b981; }
+        .file-icon.video { color: #8b5cf6; }
+        
+        .file-details {
+            flex: 1;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+        
+        .file-meta {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #94a3b8;
+        }
+        
+        .file-actions {
+            display: flex;
+            gap: 10px;
+            opacity: 0;
+            transition: 0.2s;
+        }
+        
+        .file-card:hover .file-actions {
+            opacity: 1;
+        }
+        
+        .action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            border: none;
+            background: #f1f4f9;
+            cursor: pointer;
+            color: #64748b;
+            transition: 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+        }
+        
+        .upload-area {
+            border: 2px dashed #e2e8f0;
+            border-radius: 24px;
+            padding: 40px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.2s;
+            margin-bottom: 20px;
+        }
+        
+        .upload-area:hover {
+            border-color: #6366f1;
+            background: #f8fafd;
+        }
+        
+        .upload-area i {
+            font-size: 48px;
+            color: #94a3b8;
+            margin-bottom: 15px;
+        }
+        
+        .progress-bar {
+            height: 8px;
+            background: #eef2f6;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 20px 0;
+            display: none;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #6366f1;
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: 0.3s;
+            z-index: 1100;
+        }
+        
+        .toast.show { transform: translateX(0); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="goToDashboard()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+            <h1>File Library</h1>
+            <button class="upload-btn" onclick="showUploadModal()">
+                <i class="fas fa-cloud-upload-alt"></i> Upload File
+            </button>
+        </div>
+        
+        <div id="libraryContent">
+            <div class="loader" style="margin: 60px auto;"></div>
+        </div>
+    </div>
+    
+    <!-- Upload Modal -->
+    <div class="modal-overlay" id="uploadModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Upload File</h2>
+            
+            <div class="upload-area" id="uploadArea" onclick="triggerFileInput()">
+                <input type="file" id="fileInput" style="display: none;" onchange="handleFileSelect(event)">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>Click to upload or drag and drop</h3>
+                <p style="color: #94a3b8; margin-top: 10px;">PDF, DOC, Images, Videos (Max 100MB)</p>
+            </div>
+            
+            <div class="progress-bar" id="uploadProgress">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+            
+            <div class="form-group" style="margin-bottom: 20px;">
+                <label>Folder</label>
+                <select id="fileFolder" class="chat-input">
+                    <option value="lectures">Lectures</option>
+                    <option value="assignments">Assignments</option>
+                    <option value="notes">Notes</option>
+                    <option value="exams">Practice Exams</option>
+                </select>
+            </div>
+            
+            <div class="modal-footer" style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="back-btn" onclick="closeUploadModal()">Cancel</button>
+                <button class="upload-btn" onclick="startUpload()" id="uploadBtn" disabled>Upload</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas" id="toastIcon"></i>
+        <span id="toastMessage"></span>
+    </div>
+    
+    <style>
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .form-group label { display: block; margin-bottom: 8px; font-weight: 500; }
+        .chat-input { width: 100%; padding: 12px; border: 2px solid #eef2f6; border-radius: 12px; }
+    </style>
+    
+    <script>
+        if (typeof firebaseConfig === 'undefined') {
+            window.location.href = 'login.html';
+        }
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        const storage = firebase.storage();
+        
+        let currentUser = null;
+        let selectedFile = null;
+        
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+            loadFiles();
+            setupRealtimeFiles();
+        });
+        
+        async function loadFiles() {
+            try {
+                const snapshot = await db.collection('files')
+                    .where('userId', '==', currentUser.uid)
+                    .orderBy('uploadedAt', 'desc')
+                    .get();
+                
+                const libraryEl = document.getElementById('libraryContent');
+                
+                if (snapshot.empty) {
+                    libraryEl.innerHTML = `
+                        <div style="text-align: center; padding: 60px;">
+                            <i class="fas fa-folder-open" style="font-size: 64px; color: #94a3b8;"></i>
+                            <h3 style="margin-top: 20px;">No files yet</h3>
+                            <p style="color: #64748b;">Upload your first file to get started</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Group by folder
+                const filesByFolder = {};
+                snapshot.forEach(doc => {
+                    const file = { id: doc.id, ...doc.data() };
+                    const folder = file.folder || 'other';
+                    if (!filesByFolder[folder]) filesByFolder[folder] = [];
+                    filesByFolder[folder].push(file);
+                });
+                
+                let html = '';
+                for (const [folder, files] of Object.entries(filesByFolder)) {
+                    html += `
+                        <div class="folder-section">
+                            <div class="folder-title">
+                                <i class="fas fa-folder" style="color: #6366f1;"></i>
+                                ${folder.charAt(0).toUpperCase() + folder.slice(1)}
+                                <span style="font-size: 14px; color: #94a3b8;">(${files.length})</span>
+                            </div>
+                            <div class="file-grid">
+                                ${files.map(file => getFileCard(file)).join('')}
+                            </div>
+                        </div>
+                    `;
+                }
+                
+                libraryEl.innerHTML = html;
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+        
+        function getFileCard(file) {
+            const fileType = getFileType(file.name);
+            const iconClass = {
+                pdf: 'pdf',
+                doc: 'doc',
+                image: 'image',
+                video: 'video'
+            }[fileType] || 'pdf';
+            
+            return `
+                <div class="file-card" onclick="viewFile('${file.id}')">
+                    <div class="file-icon ${iconClass}">
+                        <i class="fas fa-file-${fileType === 'pdf' ? 'pdf' : fileType === 'doc' ? 'word' : fileType === 'image' ? 'image' : 'video'}"></i>
+                    </div>
+                    <div class="file-details">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">
+                            <span>${formatFileSize(file.size)}</span>
+                            <span>${new Date(file.uploadedAt?.toDate()).toLocaleDateString()}</span>
+                        </div>
+                    </div>
+                    <div class="file-actions">
+                        <button class="action-btn" onclick="event.stopPropagation(); downloadFile('${file.id}', '${file.name}')">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="action-btn" onclick="event.stopPropagation(); deleteFile('${file.id}')">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function getFileType(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            if (['pdf'].includes(ext)) return 'pdf';
+            if (['doc', 'docx'].includes(ext)) return 'doc';
+            if (['jpg', 'jpeg', 'png', 'gif'].includes(ext)) return 'image';
+            if (['mp4', 'webm', 'mov'].includes(ext)) return 'video';
+            return 'pdf';
+        }
+        
+        function formatFileSize(bytes) {
+            if (bytes < 1024) return bytes + ' B';
+            if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+            return (bytes / 1048576).toFixed(1) + ' MB';
+        }
+        
+        function setupRealtimeFiles() {
+            db.collection('files')
+                .where('userId', '==', currentUser.uid)
+                .onSnapshot(() => loadFiles());
+        }
+        
+        window.showUploadModal = function() {
+            document.getElementById('uploadModal').classList.add('show');
+        };
+        
+        window.closeUploadModal = function() {
+            document.getElementById('uploadModal').classList.remove('show');
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadProgress').style.display = 'none';
+        };
+        
+        window.triggerFileInput = function() {
+            document.getElementById('fileInput').click();
+        };
+        
+        window.handleFileSelect = function(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('uploadBtn').disabled = false;
+                document.getElementById('uploadArea').innerHTML = `
+                    <i class="fas fa-check-circle" style="color: #10b981;"></i>
+                    <h3>${selectedFile.name}</h3>
+                    <p style="color: #94a3b8;">${formatFileSize(selectedFile.size)}</p>
+                `;
+            }
+        };
+        
+        window.startUpload = async function() {
+            if (!selectedFile) return;
+            
+            const folder = document.getElementById('fileFolder').value;
+            const uploadBtn = document.getElementById('uploadBtn');
+            const progressBar = document.getElementById('uploadProgress');
+            const progressFill = document.getElementById('progressFill');
+            
+            uploadBtn.disabled = true;
+            progressBar.style.display = 'block';
+            
+            try {
+                const storageRef = storage.ref(`users/${currentUser.uid}/${folder}/${selectedFile.name}`);
+                const uploadTask = storageRef.put(selectedFile);
+                
+                uploadTask.on('state_changed',
+                    (snapshot) => {
+                        const progress = (snapshot.bytesTransferred / snapshot.totalBytes) * 100;
+                        progressFill.style.width = progress + '%';
+                    },
+                    (error) => {
+                        showToast('Upload failed', 'error');
+                        closeUploadModal();
+                    },
+                    async () => {
+                        const downloadURL = await uploadTask.snapshot.ref.getDownloadURL();
+                        
+                        await db.collection('files').add({
+                            name: selectedFile.name,
+                            size: selectedFile.size,
+                            type: selectedFile.type,
+                            folder: folder,
+                            url: downloadURL,
+                            userId: currentUser.uid,
+                            uploadedAt: firebase.firestore.FieldValue.serverTimestamp()
+                        });
+                        
+                        showToast('File uploaded successfully!', 'success');
+                        closeUploadModal();
+                    }
+                );
+            } catch (error) {
+                showToast('Upload failed', 'error');
+                closeUploadModal();
+            }
+        };
+        
+        window.downloadFile = async function(fileId, filename) {
+            try {
+                const doc = await db.collection('files').doc(fileId).get();
+                const file = doc.data();
+                
+                // Create a temporary link
+                const link = document.createElement('a');
+                link.href = file.url;
+                link.download = filename;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                showToast('Download started', 'success');
+            } catch (error) {
+                showToast('Download failed', 'error');
+            }
+        };
+        
+        window.deleteFile = async function(fileId) {
+            if (!confirm('Are you sure you want to delete this file?')) return;
+            
+            try {
+                await db.collection('files').doc(fileId).delete();
+                showToast('File deleted', 'success');
+            } catch (error) {
+                showToast('Delete failed', 'error');
+            }
+        };
+        
+        window.viewFile = function(fileId) {
+            // Could open preview modal
+            showToast('Opening file...', 'success');
+        };
+        
+        window.goToDashboard = function() {
+            window.location.href = 'index.html';
+        };
+        
+        function showToast(message, type) {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast ${type}`;
+            toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+            toastMessage.textContent = message;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

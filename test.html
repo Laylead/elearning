@@ -1,0 +1,989 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StudyHub · Whiteboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: 1fr 300px;
+      height: 100vh;
+      gap: 1px;
+      background: #e2e8f0;
+    }
+
+    .whiteboard-section {
+      background: white;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .toolbar {
+      background: white;
+      padding: 15px 20px;
+      border-bottom: 2px solid #eef2f6;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 15px;
+      align-items: center;
+    }
+
+    .tool-group {
+      display: flex;
+      gap: 8px;
+      padding: 5px;
+      background: #f8fafd;
+      border-radius: 40px;
+    }
+
+    .tool-btn {
+      width: 45px;
+      height: 45px;
+      border-radius: 40px;
+      border: none;
+      background: transparent;
+      color: #64748b;
+      font-size: 18px;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .tool-btn:hover {
+      background: #e0e7ff;
+      color: #6366f1;
+    }
+    .tool-btn.active {
+      background: #6366f1;
+      color: white;
+    }
+
+    .color-picker {
+      width: 45px;
+      height: 45px;
+      border-radius: 40px;
+      border: 2px solid #e2e8f0;
+      cursor: pointer;
+    }
+
+    .canvas-container {
+      flex: 1;
+      position: relative;
+      overflow: hidden;
+      background: #f8fafd;
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: crosshair;
+    }
+
+    .sidebar {
+      background: white;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .room-info {
+      padding: 20px;
+      border-bottom: 2px solid #eef2f6;
+    }
+    .room-title {
+      font-size: 18px;
+      font-weight: 700;
+      margin-bottom: 5px;
+    }
+    .room-meta {
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    .participants-section {
+      padding: 20px;
+      border-bottom: 2px solid #eef2f6;
+    }
+    .section-title {
+      font-weight: 600;
+      margin-bottom: 15px;
+      color: #475569;
+    }
+    .participant {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px;
+      background: #f8fafd;
+      border-radius: 40px;
+      margin-bottom: 8px;
+    }
+    .participant-avatar {
+      width: 35px;
+      height: 35px;
+      background: #6366f1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 14px;
+    }
+    .participant-name {
+      flex: 1;
+      font-weight: 500;
+    }
+    .speaking-indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #10b981;
+      animation: pulse 1.5s infinite;
+    }
+    @keyframes pulse {
+      0% { opacity: 0.5; transform: scale(1); }
+      50% { opacity: 1; transform: scale(1.2); }
+      100% { opacity: 0.5; transform: scale(1); }
+    }
+
+    .chat-section {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+    .message {
+      margin-bottom: 15px;
+    }
+    .message-sender {
+      font-weight: 600;
+      font-size: 13px;
+      color: #6366f1;
+      margin-bottom: 3px;
+    }
+    .message-text {
+      background: #f8fafd;
+      padding: 10px 15px;
+      border-radius: 18px;
+      font-size: 14px;
+      display: inline-block;
+      max-width: 90%;
+    }
+    .chat-input {
+      padding: 15px;
+      border-top: 2px solid #eef2f6;
+      display: flex;
+      gap: 10px;
+    }
+    .chat-input input {
+      flex: 1;
+      padding: 12px;
+      border: 2px solid #e2e8f0;
+      border-radius: 40px;
+      font-size: 14px;
+    }
+    .chat-input input:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+    .chat-input button {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      border: none;
+      background: #6366f1;
+      color: white;
+      cursor: pointer;
+    }
+
+    .audio-controls {
+      display: flex;
+      gap: 10px;
+      padding: 15px;
+      border-top: 2px solid #eef2f6;
+    }
+    .audio-btn {
+      flex: 1;
+      padding: 12px;
+      border: none;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+    }
+    .audio-btn.mic {
+      background: #10b981;
+      color: white;
+    }
+    .audio-btn.mic.muted {
+      background: #ef4444;
+    }
+    .audio-btn.speaker {
+      background: #f1f4f9;
+      color: #475569;
+    }
+
+    .math-toolbar {
+      background: white;
+      padding: 10px;
+      border-top: 2px solid #eef2f6;
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    .math-btn {
+      padding: 8px 16px;
+      border: 1px solid #e2e8f0;
+      border-radius: 30px;
+      background: white;
+      cursor: pointer;
+      font-size: 14px;
+      transition: 0.2s;
+    }
+    .math-btn:hover {
+      background: #6366f1;
+      color: white;
+      border-color: #6366f1;
+    }
+
+    .screenshot-area {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: white;
+      padding: 15px;
+      border-radius: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+      display: none;
+      z-index: 100;
+    }
+    .screenshot-area.show {
+      display: block;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      background: white;
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transition: transform 0.3s;
+      z-index: 1100;
+    }
+    .toast.show { transform: translateX(-50%) translateY(0); }
+
+    /* Loading Overlay */
+    #loadingOverlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 9999;
+    }
+    .spinner {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #6366f1;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+  </style>
+</head>
+<body>
+  <!-- Loading Overlay -->
+  <div id="loadingOverlay">
+    <div style="text-align: center;">
+      <div class="spinner"></div>
+      <p id="loadingMessage">Loading room...</p>
+    </div>
+  </div>
+
+  <div class="container" style="display: none;" id="mainContent">
+    <!-- Whiteboard Section -->
+    <div class="whiteboard-section">
+      <div class="toolbar">
+        <div class="tool-group">
+          <button class="tool-btn active" id="drawBtn" title="Draw"><i class="fas fa-pencil-alt"></i></button>
+          <button class="tool-btn" id="textBtn" title="Text"><i class="fas fa-font"></i></button>
+          <button class="tool-btn" id="shapeBtn" title="Shapes"><i class="fas fa-shapes"></i></button>
+          <button class="tool-btn" id="mathBtn" title="Math Symbols"><i class="fas fa-square-root-alt"></i></button>
+          <button class="tool-btn" id="eraserBtn" title="Eraser"><i class="fas fa-eraser"></i></button>
+        </div>
+        <div class="tool-group">
+          <input type="color" id="colorPicker" class="color-picker" value="#6366f1">
+          <button class="tool-btn" id="clearBtn" title="Clear"><i class="fas fa-trash"></i></button>
+          <button class="tool-btn" id="screenshotBtn" title="Take Screenshot"><i class="fas fa-camera"></i></button>
+        </div>
+      </div>
+
+      <div class="canvas-container">
+        <canvas id="whiteboard"></canvas>
+        <div class="screenshot-area" id="screenshotArea">
+          <img id="screenshotPreview" style="max-width: 300px; max-height: 200px;">
+          <div style="display: flex; gap: 10px; margin-top: 10px;">
+            <button class="tool-btn" onclick="shareScreenshot()"><i class="fas fa-share"></i> Share</button>
+            <button class="tool-btn" onclick="closeScreenshot()"><i class="fas fa-times"></i></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="math-toolbar" id="mathToolbar" style="display: none;">
+        <button class="math-btn" onclick="insertMath('∫')">∫</button>
+        <button class="math-btn" onclick="insertMath('∑')">∑</button>
+        <button class="math-btn" onclick="insertMath('√')">√</button>
+        <button class="math-btn" onclick="insertMath('π')">π</button>
+        <button class="math-btn" onclick="insertMath('θ')">θ</button>
+        <button class="math-btn" onclick="insertMath('∞')">∞</button>
+        <button class="math-btn" onclick="insertMath('≈')">≈</button>
+        <button class="math-btn" onclick="insertMath('≠')">≠</button>
+        <button class="math-btn" onclick="insertMath('≤')">≤</button>
+        <button class="math-btn" onclick="insertMath('≥')">≥</button>
+        <button class="math-btn" onclick="insertMath('α')">α</button>
+        <button class="math-btn" onclick="insertMath('β')">β</button>
+      </div>
+    </div>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+      <div class="room-info">
+        <div class="room-title" id="roomTitle">Loading room...</div>
+        <div class="room-meta" id="roomMeta"></div>
+      </div>
+
+      <div class="participants-section">
+        <div class="section-title">Participants (<span id="participantCount">0</span>)</div>
+        <div id="participantsList"></div>
+      </div>
+
+      <div class="chat-section">
+        <div class="section-title" style="padding: 20px 20px 0;">Live Chat</div>
+        <div class="chat-messages" id="chatMessages"></div>
+        <div class="chat-input">
+          <input type="text" id="chatInput" placeholder="Type a message..." onkeypress="if(event.key==='Enter') sendMessage()">
+          <button onclick="sendMessage()"><i class="fas fa-paper-plane"></i></button>
+        </div>
+      </div>
+
+      <div class="audio-controls">
+        <button class="audio-btn mic" id="micBtn" onclick="toggleMic()"><i class="fas fa-microphone"></i> Mic</button>
+        <button class="audio-btn speaker" id="speakerBtn" onclick="toggleSpeaker()"><i class="fas fa-volume-up"></i> Speaker</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast">
+    <i class="fas fa-info-circle"></i>
+    <span id="toastMessage"></span>
+  </div>
+
+  <!-- Agora Script -->
+  <script src="agora.js"></script>
+  <!-- Firebase -->
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    // Get room ID from URL
+    const urlParams = new URLSearchParams(window.location.search);
+    const roomId = urlParams.get('room');
+
+    // Check for room ID first
+    if (!roomId) {
+      window.location.href = 'studyrooms.html';
+    }
+
+    // Check if Firebase config exists
+    if (typeof firebaseConfig === 'undefined') {
+      console.error('Firebase config not found');
+      document.getElementById('loadingMessage').textContent = 'Error: Firebase configuration missing';
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 2000);
+    } else {
+      // Initialize Firebase
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // Global variables
+      let currentUser = null;
+      let roomData = null;
+      let canvas = document.getElementById('whiteboard');
+      let ctx = canvas.getContext('2d');
+      let isDrawing = false;
+      let currentTool = 'draw';
+      let currentColor = '#6366f1';
+      let lastX = 0;
+      let lastY = 0;
+      let isCreator = false;
+      let authChecked = false;
+      
+      // Agora variables
+      let client = null;
+      let localTracks = {
+        audio: null
+      };
+      let remoteUsers = {};
+      let isMicMuted = false;
+      let isSpeakerMuted = false;
+
+      // Set a timeout for auth check
+      const authTimeout = setTimeout(() => {
+        if (!authChecked) {
+          console.log('Auth check timeout - redirecting to login');
+          sessionStorage.setItem('returnToRoom', roomId);
+          window.location.href = 'login.html';
+        }
+      }, 5000);
+
+      // Check for existing session first
+      const unsubscribe = auth.onAuthStateChanged(async (user) => {
+        clearTimeout(authTimeout);
+        authChecked = true;
+        
+        if (!user) {
+          // Store room ID to return after login
+          sessionStorage.setItem('returnToRoom', roomId);
+          window.location.href = 'login.html';
+          return;
+        }
+
+        // User is authenticated
+        currentUser = user;
+        
+        try {
+          // Load room data
+          await loadRoomData();
+          
+          // Hide loading overlay and show main content
+          document.getElementById('loadingOverlay').style.display = 'none';
+          document.getElementById('mainContent').style.display = 'grid';
+          
+          // Initialize everything
+          initCanvas();
+          
+          // Initialize Agora for audio (if available)
+          if (typeof AgoraRTC !== 'undefined') {
+            initAgora();
+          }
+          
+          // Set up real-time listeners
+          setupRealtimeListeners();
+          
+          // Add to participants
+          await addParticipant();
+          
+        } catch (error) {
+          console.error('Error initializing room:', error);
+          document.getElementById('loadingMessage').textContent = 'Error loading room: ' + error.message;
+          setTimeout(() => {
+            window.location.href = 'studyrooms.html';
+          }, 2000);
+        }
+      }, (error) => {
+        console.error('Auth error:', error);
+        clearTimeout(authTimeout);
+        document.getElementById('loadingMessage').textContent = 'Authentication error';
+        setTimeout(() => {
+          window.location.href = 'login.html';
+        }, 2000);
+      });
+
+      async function loadRoomData() {
+        try {
+          const roomDoc = await db.collection('activeRooms').doc(roomId).get();
+          if (!roomDoc.exists) {
+            throw new Error('Room not found');
+          }
+
+          roomData = roomDoc.data();
+          isCreator = roomData.createdBy === currentUser.uid;
+          
+          document.getElementById('roomTitle').textContent = roomData.title || 'Study Room';
+          document.getElementById('roomMeta').innerHTML = `<i class="fas fa-user"></i> Created by ${roomData.createdBy === currentUser.uid ? 'You' : 'Another user'}`;
+        } catch (error) {
+          console.error('Error loading room:', error);
+          throw error;
+        }
+      }
+
+      function initCanvas() {
+        // Set canvas size
+        function resizeCanvas() {
+          const container = canvas.parentElement;
+          canvas.width = container.clientWidth;
+          canvas.height = container.clientHeight;
+          drawBackground();
+        }
+
+        window.addEventListener('resize', resizeCanvas);
+        resizeCanvas();
+
+        // Drawing events
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseout', stopDrawing);
+
+        // Touch events for mobile
+        canvas.addEventListener('touchstart', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousedown', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchmove', (e) => {
+          e.preventDefault();
+          const touch = e.touches[0];
+          const mouseEvent = new MouseEvent('mousemove', {
+            clientX: touch.clientX,
+            clientY: touch.clientY
+          });
+          canvas.dispatchEvent(mouseEvent);
+        });
+
+        canvas.addEventListener('touchend', stopDrawing);
+      }
+
+      function drawBackground() {
+        ctx.fillStyle = 'white';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+      }
+
+      function startDrawing(e) {
+        isDrawing = true;
+        const pos = getMousePos(e);
+        lastX = pos.x;
+        lastY = pos.y;
+        
+        if (currentTool === 'text') {
+          const text = prompt('Enter text:');
+          if (text) {
+            ctx.font = '20px Inter';
+            ctx.fillStyle = currentColor;
+            ctx.fillText(text, pos.x, pos.y);
+            broadcastCanvas();
+          }
+        }
+      }
+
+      function draw(e) {
+        if (!isDrawing) return;
+        if (currentTool === 'draw' || currentTool === 'eraser') {
+          e.preventDefault();
+          const pos = getMousePos(e);
+          
+          ctx.beginPath();
+          ctx.moveTo(lastX, lastY);
+          ctx.lineTo(pos.x, pos.y);
+          ctx.strokeStyle = currentTool === 'eraser' ? 'white' : currentColor;
+          ctx.lineWidth = currentTool === 'eraser' ? 20 : 2;
+          ctx.stroke();
+          
+          // Broadcast drawing in real-time
+          broadcastDrawing(lastX, lastY, pos.x, pos.y);
+          
+          lastX = pos.x;
+          lastY = pos.y;
+        }
+      }
+
+      function stopDrawing() {
+        isDrawing = false;
+      }
+
+      function getMousePos(e) {
+        const rect = canvas.getBoundingClientRect();
+        const scaleX = canvas.width / rect.width;
+        const scaleY = canvas.height / rect.height;
+        
+        return {
+          x: (e.clientX - rect.left) * scaleX,
+          y: (e.clientY - rect.top) * scaleY
+        };
+      }
+
+      // Tool buttons
+      document.getElementById('drawBtn').addEventListener('click', () => {
+        setActiveTool('draw');
+        document.getElementById('mathToolbar').style.display = 'none';
+      });
+      
+      document.getElementById('textBtn').addEventListener('click', () => {
+        setActiveTool('text');
+        document.getElementById('mathToolbar').style.display = 'none';
+      });
+      
+      document.getElementById('shapeBtn').addEventListener('click', () => {
+        setActiveTool('shape');
+        document.getElementById('mathToolbar').style.display = 'none';
+      });
+      
+      document.getElementById('mathBtn').addEventListener('click', () => {
+        setActiveTool('math');
+        document.getElementById('mathToolbar').style.display = 'flex';
+      });
+      
+      document.getElementById('eraserBtn').addEventListener('click', () => {
+        setActiveTool('eraser');
+        document.getElementById('mathToolbar').style.display = 'none';
+      });
+
+      document.getElementById('colorPicker').addEventListener('input', (e) => {
+        currentColor = e.target.value;
+      });
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        if (confirm('Clear the whiteboard?')) {
+          ctx.clearRect(0, 0, canvas.width, canvas.height);
+          drawBackground();
+          broadcastClear();
+        }
+      });
+
+      document.getElementById('screenshotBtn').addEventListener('click', takeScreenshot);
+
+      function setActiveTool(tool) {
+        currentTool = tool;
+        document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+        document.getElementById(tool + 'Btn').classList.add('active');
+      }
+
+      // Math symbols
+      window.insertMath = function(symbol) {
+        const pos = { x: canvas.width/2, y: canvas.height/2 };
+        ctx.font = '30px Inter';
+        ctx.fillStyle = currentColor;
+        ctx.fillText(symbol, pos.x, pos.y);
+        broadcastCanvas();
+      };
+
+      // Screenshot
+      function takeScreenshot() {
+        const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('screenshotPreview').src = dataUrl;
+        document.getElementById('screenshotArea').classList.add('show');
+      }
+
+      window.closeScreenshot = function() {
+        document.getElementById('screenshotArea').classList.remove('show');
+      };
+
+      window.shareScreenshot = function() {
+        const dataUrl = document.getElementById('screenshotPreview').src;
+        // Broadcast screenshot to all users
+        db.collection('whiteboardScreenshots').add({
+          roomId: roomId,
+          imageData: dataUrl,
+          userId: currentUser.uid,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        showToast('Screenshot shared!');
+        closeScreenshot();
+      };
+
+      // Chat functions
+      window.sendMessage = function() {
+        const input = document.getElementById('chatInput');
+        const message = input.value.trim();
+        
+        if (message) {
+          db.collection('roomMessages').add({
+            roomId: roomId,
+            userId: currentUser.uid,
+            userName: currentUser.displayName || 'Student',
+            message: message,
+            timestamp: firebase.firestore.FieldValue.serverTimestamp()
+          });
+          input.value = '';
+        }
+      };
+
+      // Participants
+      async function addParticipant() {
+        await db.collection('roomParticipants').doc(roomId + '_' + currentUser.uid).set({
+          roomId: roomId,
+          userId: currentUser.uid,
+          userName: currentUser.displayName || 'Student',
+          joinedAt: firebase.firestore.FieldValue.serverTimestamp()
+        });
+        
+        // Remove participant on page unload
+        window.addEventListener('beforeunload', async () => {
+          await db.collection('roomParticipants').doc(roomId + '_' + currentUser.uid).delete();
+        });
+      }
+
+      // Agora Audio Integration
+      async function initAgora() {
+        try {
+          // Check if Agora is available
+          if (typeof AgoraRTC === 'undefined') {
+            console.warn('AgoraRTC not available');
+            return;
+          }
+          
+          // Initialize Agora client
+          client = AgoraRTC.createClient({ mode: 'live', codec: 'vp8' });
+          
+          // Set client role (host if creator, audience otherwise)
+          await client.setClientRole(isCreator ? 'host' : 'audience');
+          
+          // Join the channel
+          const uid = await client.join(agoraConfig.appId, roomId, agoraConfig.token || null, currentUser.uid);
+          
+          // Create local audio track
+          localTracks.audio = await AgoraRTC.createMicrophoneAudioTrack();
+          
+          // Publish local audio if host
+          if (isCreator) {
+            await client.publish([localTracks.audio]);
+          }
+          
+          // Subscribe to remote users
+          client.on('user-published', async (user, mediaType) => {
+            await client.subscribe(user, mediaType);
+            if (mediaType === 'audio') {
+              user.audioTrack.play();
+            }
+          });
+          
+          showToast('Connected to audio channel');
+        } catch (error) {
+          console.error('Agora initialization error:', error);
+          showToast('Error connecting to audio');
+        }
+      }
+
+      window.toggleMic = function() {
+        if (!localTracks.audio) return;
+        
+        isMicMuted = !isMicMuted;
+        localTracks.audio.setEnabled(!isMicMuted);
+        
+        const micBtn = document.getElementById('micBtn');
+        micBtn.innerHTML = isMicMuted ? 
+          '<i class="fas fa-microphone-slash"></i> Muted' : 
+          '<i class="fas fa-microphone"></i> Mic';
+        micBtn.classList.toggle('muted', isMicMuted);
+        
+        showToast(isMicMuted ? 'Microphone muted' : 'Microphone unmuted');
+      };
+
+      window.toggleSpeaker = function() {
+        isSpeakerMuted = !isSpeakerMuted;
+        
+        // Mute/unmute all remote audio tracks
+        for (let uid in remoteUsers) {
+          if (remoteUsers[uid].audioTrack) {
+            remoteUsers[uid].audioTrack.setVolume(isSpeakerMuted ? 0 : 100);
+          }
+        }
+        
+        const speakerBtn = document.getElementById('speakerBtn');
+        speakerBtn.innerHTML = isSpeakerMuted ? 
+          '<i class="fas fa-volume-mute"></i> Muted' : 
+          '<i class="fas fa-volume-up"></i> Speaker';
+        
+        showToast(isSpeakerMuted ? 'Speakers muted' : 'Speakers unmuted');
+      };
+
+      // Real-time listeners
+      function setupRealtimeListeners() {
+        // Listen for drawing events
+        db.collection('whiteboardDrawings')
+          .where('roomId', '==', roomId)
+          .orderBy('timestamp', 'desc')
+          .limit(50)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added' && change.doc.data().userId !== currentUser.uid) {
+                const data = change.doc.data();
+                if (data.type === 'draw') {
+                  drawRemote(data);
+                } else if (data.type === 'clear') {
+                  ctx.clearRect(0, 0, canvas.width, canvas.height);
+                  drawBackground();
+                }
+              }
+            });
+          });
+
+        // Listen for chat messages
+        db.collection('roomMessages')
+          .where('roomId', '==', roomId)
+          .orderBy('timestamp')
+          .limit(100)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added') {
+                const msg = change.doc.data();
+                addMessageToChat(msg);
+              }
+            });
+          });
+
+        // Listen for participants
+        db.collection('roomParticipants')
+          .where('roomId', '==', roomId)
+          .onSnapshot((snapshot) => {
+            const participants = [];
+            snapshot.forEach(doc => {
+              participants.push(doc.data());
+            });
+            updateParticipantsList(participants);
+          });
+
+        // Listen for screenshots
+        db.collection('whiteboardScreenshots')
+          .where('roomId', '==', roomId)
+          .orderBy('timestamp', 'desc')
+          .limit(1)
+          .onSnapshot((snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+              if (change.type === 'added' && change.doc.data().userId !== currentUser.uid) {
+                showScreenshotNotification(change.doc.data());
+              }
+            });
+          });
+      }
+
+      function drawRemote(data) {
+        ctx.beginPath();
+        ctx.moveTo(data.startX, data.startY);
+        ctx.lineTo(data.endX, data.endY);
+        ctx.strokeStyle = data.color;
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+
+      function broadcastDrawing(startX, startY, endX, endY) {
+        db.collection('whiteboardDrawings').add({
+          roomId: roomId,
+          userId: currentUser.uid,
+          type: 'draw',
+          startX: startX,
+          startY: startY,
+          endX: endX,
+          endY: endY,
+          color: currentColor,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      function broadcastClear() {
+        db.collection('whiteboardDrawings').add({
+          roomId: roomId,
+          userId: currentUser.uid,
+          type: 'clear',
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      function broadcastCanvas() {
+        // For full canvas updates
+        const imageData = canvas.toDataURL();
+        db.collection('whiteboardSnapshots').add({
+          roomId: roomId,
+          userId: currentUser.uid,
+          imageData: imageData,
+          timestamp: firebase.firestore.FieldValue.serverTimestamp()
+        });
+      }
+
+      function addMessageToChat(msg) {
+        const chatEl = document.getElementById('chatMessages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'message';
+        messageDiv.innerHTML = `
+          <div class="message-sender">${msg.userName || 'Student'}</div>
+          <div class="message-text">${msg.message}</div>
+        `;
+        chatEl.appendChild(messageDiv);
+        chatEl.scrollTop = chatEl.scrollHeight;
+      }
+
+      function updateParticipantsList(participants) {
+        document.getElementById('participantCount').textContent = participants.length;
+        
+        const listEl = document.getElementById('participantsList');
+        listEl.innerHTML = participants.map(p => `
+          <div class="participant">
+            <div class="participant-avatar">${(p.userName || 'S')[0]}</div>
+            <div class="participant-name">${p.userName || 'Student'} ${p.userId === currentUser.uid ? '(You)' : ''}</div>
+            ${p.userId === roomData?.createdBy ? '<span class="speaking-indicator" title="Host"></span>' : ''}
+          </div>
+        `).join('');
+      }
+
+      function showScreenshotNotification(screenshot) {
+        showToast('New screenshot shared!');
+      }
+
+      function showToast(message) {
+        const toast = document.getElementById('toast');
+        document.getElementById('toastMessage').textContent = message;
+        toast.classList.add('show');
+        setTimeout(() => toast.classList.remove('show'), 3000);
+      }
+
+      // Cleanup on page leave
+      window.addEventListener('beforeunload', async () => {
+        if (client) {
+          await client.leave();
+        }
+        if (localTracks.audio) {
+          localTracks.audio.close();
+        }
+      });
+    }
+  </script>
+</body>
+</html>

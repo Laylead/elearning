@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub · Study Rooms</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.15.0/dist/AgoraRTC_N-4.15.0.js"></script>
+    <script src="agora.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f5f7fb; min-height: 100vh; padding: 20px; }
+        
+        .rooms-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+        
+        .back-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .rooms-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+        
+        .room-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(99,102,241,0.1);
+            cursor: pointer;
+            transition: 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .room-card:hover {
+            transform: translateY(-5px);
+            border-color: #6366f1;
+        }
+        
+        .room-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+        
+        .live-indicator {
+            background: #ef4444;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 40px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
+        .participants {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .room-title {
+            font-size: 20px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+        
+        .room-course {
+            background: #e0e7ff;
+            color: #6366f1;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+            margin-bottom: 15px;
+        }
+        
+        .room-meta {
+            display: flex;
+            gap: 15px;
+            color: #94a3b8;
+            font-size: 14px;
+            margin-top: 15px;
+        }
+        
+        .create-room-card {
+            background: linear-gradient(135deg, #6366f1, #8b5cf6);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+        
+        .create-room-card i {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 500px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .modal-footer {
+            display: flex;
+            gap: 12px;
+            justify-content: flex-end;
+            margin-top: 30px;
+        }
+        
+        .modal-btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        
+        .modal-btn-primary {
+            background: #6366f1;
+            color: white;
+        }
+        
+        .modal-btn-secondary {
+            background: #f1f4f9;
+            color: #475569;
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: 0.3s;
+            z-index: 1100;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="rooms-container">
+        <div class="header">
+            <button class="back-btn" onclick="goToDashboard()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+            <h1>Study Rooms</h1>
+            <button class="modal-btn modal-btn-primary" onclick="showCreateRoomModal()">
+                <i class="fas fa-plus"></i> Create Room
+            </button>
+        </div>
+        
+        <div class="rooms-grid" id="roomsGrid">
+            <div class="loader"></div>
+        </div>
+    </div>
+    
+    <!-- Create Room Modal -->
+    <div class="modal-overlay" id="createRoomModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Create Study Room</h2>
+            <div class="form-group">
+                <label>Room Title</label>
+                <input type="text" id="roomTitle" placeholder="e.g., Calculus Study Group">
+            </div>
+            <div class="form-group">
+                <label>Course Code</label>
+                <input type="text" id="roomCourse" placeholder="e.g., MAT 201">
+            </div>
+            <div class="form-group">
+                <label>Description</label>
+                <textarea id="roomDesc" rows="3" placeholder="What will you study?"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Subject Area</label>
+                <select id="roomSubject">
+                    <option value="mathematics">Mathematics</option>
+                    <option value="physics">Physics</option>
+                    <option value="chemistry">Chemistry</option>
+                    <option value="biology">Biology</option>
+                    <option value="computer-science">Computer Science</option>
+                    <option value="engineering">Engineering</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+            <div class="modal-footer">
+                <button class="modal-btn modal-btn-secondary" onclick="closeCreateModal()">Cancel</button>
+                <button class="modal-btn modal-btn-primary" onclick="createRoom()">Create Room</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas" id="toastIcon"></i>
+        <span id="toastMessage"></span>
+    </div>
+    
+    <script>
+        // Check Firebase config
+        if (typeof firebaseConfig === 'undefined') {
+            window.location.href = 'login.html';
+        }
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        let currentUser = null;
+        
+        // Auth state
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            currentUser = user;
+            loadRooms();
+            setupRealtimeRooms();
+        });
+        
+        // Load rooms
+        async function loadRooms() {
+            try {
+                const snapshot = await db.collection('activeRooms')
+                    .orderBy('createdAt', 'desc')
+                    .get();
+                
+                const roomsGrid = document.getElementById('roomsGrid');
+                
+                if (snapshot.empty) {
+                    roomsGrid.innerHTML = `
+                        <div class="room-card create-room-card" onclick="showCreateRoomModal()">
+                            <i class="fas fa-plus-circle"></i>
+                            <h3>Create Your First Room</h3>
+                            <p>Start a study session with classmates</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                let html = '';
+                snapshot.forEach(doc => {
+                    const room = doc.data();
+                    html += `
+                        <div class="room-card" onclick="joinRoom('${doc.id}')">
+                            <div class="room-header">
+                                <span class="live-indicator">LIVE</span>
+                                <span class="participants"><i class="fas fa-user"></i> ${room.participants?.length || 1}</span>
+                            </div>
+                            <div class="room-title">${room.title || 'Untitled Room'}</div>
+                            <div class="room-course">${room.course || 'General'}</div>
+                            <p style="color: #64748b; margin-bottom: 15px;">${room.description || ''}</p>
+                            <div class="room-meta">
+                                <span><i class="far fa-clock"></i> ${room.duration || '01:00'}</span>
+                                <span><i class="fas fa-tag"></i> ${room.subject || 'study'}</span>
+                            </div>
+                        </div>
+                    `;
+                });
+                
+                html += `
+                    <div class="room-card create-room-card" onclick="showCreateRoomModal()">
+                        <i class="fas fa-plus-circle"></i>
+                        <h3>Create New Room</h3>
+                        <p>Start a new study session</p>
+                    </div>
+                `;
+                
+                roomsGrid.innerHTML = html;
+            } catch (error) {
+                showToast('Error loading rooms', 'error');
+            }
+        }
+        
+        // Setup real-time listener
+        function setupRealtimeRooms() {
+            db.collection('activeRooms').onSnapshot(() => {
+                loadRooms();
+            });
+        }
+        
+        // Show create room modal
+        window.showCreateRoomModal = function() {
+            document.getElementById('createRoomModal').classList.add('show');
+        };
+        
+        window.closeCreateModal = function() {
+            document.getElementById('createRoomModal').classList.remove('show');
+        };
+        
+        // Create room
+        window.createRoom = async function() {
+            const title = document.getElementById('roomTitle').value;
+            const course = document.getElementById('roomCourse').value;
+            const desc = document.getElementById('roomDesc').value;
+            const subject = document.getElementById('roomSubject').value;
+            
+            if (!title || !course) {
+                showToast('Please fill in required fields', 'error');
+                return;
+            }
+            
+            try {
+                const roomData = {
+                    title: `${course} – ${title}`,
+                    course: course,
+                    description: desc,
+                    subject: subject,
+                    duration: '01:00:00',
+                    live: true,
+                    participants: [currentUser.uid],
+                    createdBy: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                const docRef = await db.collection('activeRooms').add(roomData);
+                closeCreateModal();
+                showToast('Room created!', 'success');
+                
+                // Redirect to the room
+                setTimeout(() => {
+                    window.location.href = `whiteboard.html?room=${docRef.id}`;
+                }, 1000);
+            } catch (error) {
+                showToast('Error creating room', 'error');
+            }
+        };
+        
+        // Join room
+        window.joinRoom = function(roomId) {
+            window.location.href = `whiteboard.html?room=${roomId}`;
+        };
+        
+        // Go to dashboard
+        window.goToDashboard = function() {
+            window.location.href = 'index.html';
+        };
+        
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast ${type}`;
+            toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+            toastMessage.textContent = message;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

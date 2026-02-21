@@ -1,0 +1,521 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub · Settings</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f5f7fb; min-height: 100vh; padding: 30px; }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .back-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .settings-card {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            margin-bottom: 24px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        
+        .settings-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
+        }
+        
+        .settings-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px 0;
+            border-bottom: 1px solid #eef2f6;
+        }
+        
+        .settings-item:last-child {
+            border-bottom: none;
+        }
+        
+        .settings-label {
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .settings-value {
+            color: #94a3b8;
+        }
+        
+        .form-group {
+            margin-bottom: 20px;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: #475569;
+        }
+        
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 14px 16px;
+            border: 2px solid #e2e8f0;
+            border-radius: 16px;
+            font-size: 15px;
+        }
+        
+        .form-group input:focus {
+            outline: none;
+            border-color: #6366f1;
+        }
+        
+        .save-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        
+        .save-btn:hover {
+            background: #4f52e0;
+        }
+        
+        .danger-zone {
+            border: 2px solid #fee2e2;
+        }
+        
+        .danger-btn {
+            background: #ef4444;
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            width: 100%;
+            font-size: 16px;
+            transition: 0.2s;
+        }
+        
+        .danger-btn:hover {
+            background: #dc2626;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #e2e8f0;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .toggle-slider {
+            background-color: #6366f1;
+        }
+        
+        input:checked + .toggle-slider:before {
+            transform: translateX(26px);
+        }
+        
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: 0.3s;
+            z-index: 1100;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="goToDashboard()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+            <h1>Settings</h1>
+            <div style="width: 100px;"></div>
+        </div>
+        
+        <div id="settingsContent">
+            <div class="loader"></div>
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas" id="toastIcon"></i>
+        <span id="toastMessage"></span>
+    </div>
+    
+    <script>
+        if (typeof firebaseConfig === 'undefined') {
+            window.location.href = 'login.html';
+        }
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        let currentUser = null;
+        let userData = null;
+        
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = user;
+            await loadUserData();
+            displaySettings();
+        });
+        
+        async function loadUserData() {
+            try {
+                const doc = await db.collection('users').doc(currentUser.uid).get();
+                if (doc.exists) {
+                    userData = doc.data();
+                } else {
+                    // Create default user data
+                    userData = {
+                        fullName: currentUser.displayName || '',
+                        email: currentUser.email,
+                        university: '',
+                        major: '',
+                        year: 'Freshman',
+                        notifications: true,
+                        darkMode: false,
+                        emailUpdates: true
+                    };
+                }
+            } catch (error) {
+                console.error('Error loading user data:', error);
+            }
+        }
+        
+        function displaySettings() {
+            const html = `
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <i class="fas fa-user"></i> Profile Information
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Full Name</label>
+                        <input type="text" id="fullName" value="${userData.fullName || ''}" placeholder="Your full name">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Email</label>
+                        <input type="email" id="email" value="${userData.email || currentUser.email}" readonly style="background: #f8fafd;">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>University</label>
+                        <input type="text" id="university" value="${userData.university || ''}" placeholder="e.g., Stanford University">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Major</label>
+                        <input type="text" id="major" value="${userData.major || ''}" placeholder="e.g., Computer Science">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Year</label>
+                        <select id="year">
+                            <option value="Freshman" ${userData.year === 'Freshman' ? 'selected' : ''}>Freshman</option>
+                            <option value="Sophomore" ${userData.year === 'Sophomore' ? 'selected' : ''}>Sophomore</option>
+                            <option value="Junior" ${userData.year === 'Junior' ? 'selected' : ''}>Junior</option>
+                            <option value="Senior" ${userData.year === 'Senior' ? 'selected' : ''}>Senior</option>
+                            <option value="Graduate" ${userData.year === 'Graduate' ? 'selected' : ''}>Graduate</option>
+                        </select>
+                    </div>
+                    
+                    <button class="save-btn" onclick="saveProfile()">Save Changes</button>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <i class="fas fa-bell"></i> Notifications
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Push Notifications</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="notifications" ${userData.notifications ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Email Updates</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="emailUpdates" ${userData.emailUpdates ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Study Reminders</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="studyReminders" ${userData.studyReminders ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <i class="fas fa-paint-brush"></i> Appearance
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Dark Mode</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="darkMode" ${userData.darkMode ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Compact View</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="compactView" ${userData.compactView ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-card">
+                    <div class="settings-title">
+                        <i class="fas fa-shield-alt"></i> Privacy
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Profile Visibility</span>
+                        <select id="profileVisibility" style="padding: 8px 16px; border-radius: 30px;">
+                            <option value="public" ${userData.profileVisibility === 'public' ? 'selected' : ''}>Public</option>
+                            <option value="friends" ${userData.profileVisibility === 'friends' ? 'selected' : ''}>Friends Only</option>
+                            <option value="private" ${userData.profileVisibility === 'private' ? 'selected' : ''}>Private</option>
+                        </select>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Show Study Activity</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="showActivity" ${userData.showActivity ? 'checked' : ''}>
+                            <span class="toggle-slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-card danger-zone">
+                    <div class="settings-title">
+                        <i class="fas fa-exclamation-triangle" style="color: #ef4444;"></i> Danger Zone
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Delete Account</span>
+                        <button class="danger-btn" onclick="deleteAccount()" style="width: auto; padding: 10px 20px;">Delete</button>
+                    </div>
+                    
+                    <div class="settings-item">
+                        <span class="settings-label">Export Data</span>
+                        <button class="save-btn" onclick="exportData()" style="width: auto; padding: 10px 20px;">Export</button>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('settingsContent').innerHTML = html;
+        }
+        
+        window.saveProfile = async function() {
+            try {
+                const updates = {
+                    fullName: document.getElementById('fullName').value,
+                    university: document.getElementById('university').value,
+                    major: document.getElementById('major').value,
+                    year: document.getElementById('year').value,
+                    notifications: document.getElementById('notifications').checked,
+                    emailUpdates: document.getElementById('emailUpdates').checked,
+                    studyReminders: document.getElementById('studyReminders').checked,
+                    darkMode: document.getElementById('darkMode').checked,
+                    compactView: document.getElementById('compactView').checked,
+                    profileVisibility: document.getElementById('profileVisibility').value,
+                    showActivity: document.getElementById('showActivity').checked,
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                };
+                
+                await db.collection('users').doc(currentUser.uid).set(updates, { merge: true });
+                showToast('Settings saved successfully!', 'success');
+                
+                // Apply dark mode if enabled
+                if (updates.darkMode) {
+                    document.body.style.background = '#1a1c2c';
+                    document.body.style.color = 'white';
+                }
+            } catch (error) {
+                showToast('Error saving settings', 'error');
+            }
+        };
+        
+        window.deleteAccount = async function() {
+            if (!confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                return;
+            }
+            
+            try {
+                // Delete user data from Firestore
+                await db.collection('users').doc(currentUser.uid).delete();
+                
+                // Delete the user account
+                await currentUser.delete();
+                
+                showToast('Account deleted', 'success');
+                setTimeout(() => {
+                    window.location.href = 'login.html';
+                }, 2000);
+            } catch (error) {
+                showToast('Error deleting account', 'error');
+            }
+        };
+        
+        window.exportData = async function() {
+            try {
+                // Collect all user data
+                const userDoc = await db.collection('users').doc(currentUser.uid).get();
+                const files = await db.collection('files').where('userId', '==', currentUser.uid).get();
+                const stats = await db.collection('studyStats').doc(currentUser.uid).get();
+                
+                const exportData = {
+                    user: userDoc.data(),
+                    files: files.docs.map(d => d.data()),
+                    stats: stats.data(),
+                    exportDate: new Date().toISOString()
+                };
+                
+                // Create download
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+                
+                const exportFileDefaultName = `studyhub-export-${Date.now()}.json`;
+                
+                const linkElement = document.createElement('a');
+                linkElement.setAttribute('href', dataUri);
+                linkElement.setAttribute('download', exportFileDefaultName);
+                linkElement.click();
+                
+                showToast('Data exported successfully!', 'success');
+            } catch (error) {
+                showToast('Error exporting data', 'error');
+            }
+        };
+        
+        window.goToDashboard = function() {
+            window.location.href = 'index.html';
+        };
+        
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast ${type}`;
+            toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+            toastMessage.textContent = message;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>

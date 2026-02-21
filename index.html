@@ -1,0 +1,1216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>StudyHub · Dashboard</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    }
+
+    body {
+      background: #f5f7fb;
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 16px;
+    }
+
+    .dashboard {
+      max-width: 1440px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+      position: relative;
+    }
+
+    /* ===== SIDEBAR ===== */
+    .sidebar {
+      background: white;
+      border-radius: 32px;
+      padding: 24px 16px;
+      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
+      display: flex;
+      flex-direction: column;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      height: fit-content;
+      position: relative;
+      z-index: 20;
+    }
+
+    @media (max-width: 767px) {
+      .sidebar {
+        position: fixed;
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        width: auto;
+        max-width: 320px;
+        transform: translateX(-120%);
+        opacity: 0;
+        pointer-events: none;
+        transition: transform 0.3s ease, opacity 0.2s;
+        max-height: calc(100vh - 32px);
+        overflow-y: auto;
+        z-index: 100;
+      }
+      .sidebar.open {
+        transform: translateX(0);
+        opacity: 1;
+        pointer-events: all;
+      }
+      .menu-overlay {
+        position: fixed;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: rgba(0,0,0,0.3);
+        backdrop-filter: blur(4px);
+        z-index: 99;
+        opacity: 0;
+        pointer-events: none;
+        transition: opacity 0.2s;
+      }
+      .menu-overlay.active {
+        opacity: 1;
+        pointer-events: all;
+      }
+    }
+
+    @media (min-width: 768px) {
+      .dashboard {
+        grid-template-columns: 280px 1fr;
+      }
+      .sidebar {
+        transform: none !important;
+        opacity: 1 !important;
+        pointer-events: all !important;
+        position: relative;
+      }
+      .menu-toggle, .menu-overlay { display: none; }
+    }
+
+    .menu-toggle {
+      background: #6366f1;
+      color: white;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.6rem;
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      z-index: 101;
+      box-shadow: 0 10px 25px #6366f1;
+      cursor: pointer;
+      border: none;
+    }
+
+    .logo {
+      font-size: 28px;
+      font-weight: 700;
+      margin-bottom: 28px;
+      padding-left: 8px;
+    }
+    .logo span {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      margin: 6px 0;
+      border-radius: 20px;
+      color: #475569;
+      font-weight: 500;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .nav-item i { width: 24px; color: #94a3b8; }
+    .nav-item.active {
+      background: #6366f1;
+      color: white;
+      box-shadow: 0 10px 20px -7px #6366f1;
+    }
+    .nav-item.active i { color: white; }
+    .nav-item:hover:not(.active) { background: #f1f5f9; transform: translateX(5px); }
+
+    .upgrade-card {
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 28px;
+      padding: 22px 16px;
+      margin: 24px 0 16px;
+      color: white;
+      transition: transform 0.2s;
+      cursor: pointer;
+    }
+
+    .logout-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      color: #ef4444;
+      border-top: 1px solid #eef2f6;
+      cursor: pointer;
+      border-radius: 18px;
+    }
+    .logout-item:hover { background: #fee2e2; }
+
+    /* ===== MAIN CONTENT ===== */
+    .main {
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      width: 100%;
+    }
+
+    .welcome-header {
+      background: white;
+      border-radius: 32px;
+      padding: 28px 24px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.04);
+    }
+
+    .user-avatar {
+      width: 60px;
+      height: 60px;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 24px;
+      font-weight: 600;
+    }
+
+    .create-room-btn {
+      background: #6366f1;
+      color: white;
+      padding: 16px 30px;
+      border-radius: 60px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      box-shadow: 0 16px 28px -8px #6366f1;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .create-room-btn:hover { transform: scale(1.02); }
+
+    .two-column, .bottom-row {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 24px;
+    }
+    @media (min-width: 768px) {
+      .two-column { grid-template-columns: 1.6fr 1fr; }
+      .bottom-row { grid-template-columns: 1fr 1fr; }
+    }
+
+    .card {
+      background: white;
+      border-radius: 32px;
+      padding: 26px 22px;
+      box-shadow: 0 12px 30px rgba(0,0,0,0.02);
+    }
+
+    .card-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .live-badge {
+      background: #fee2e2;
+      color: #ef4444;
+      padding: 6px 14px;
+      border-radius: 40px;
+      font-size: 13px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Rooms Grid */
+    .rooms-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 16px;
+    }
+    @media (min-width: 500px) { .rooms-grid { grid-template-columns: repeat(2,1fr); } }
+
+    .room-card {
+      background: #f8fafd;
+      border-radius: 24px;
+      padding: 20px;
+      border: 1px solid #edf2f7;
+      transition: 0.2s;
+      cursor: pointer;
+    }
+    .room-card:hover {
+      border-color: #6366f1;
+      transform: translateY(-4px);
+    }
+
+    .room-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+    .student-count { background: #e0e7ff; color: #6366f1; padding: 4px 12px; border-radius: 30px; }
+    .live-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 30px; }
+    .join-tag { background: #6366f1; color: white; padding: 4px 16px; border-radius: 30px; }
+
+    /* Sessions */
+    .sessions-list { display: flex; flex-direction: column; gap: 12px; }
+    .session-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px;
+      background: #f8fafd;
+      border-radius: 20px;
+      border: 1px solid #edf2f7;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .session-item:hover { background: #e0e7ff; transform: translateX(5px); }
+    .session-join {
+      background: #6366f1;
+      color: white;
+      padding: 8px 22px;
+      border-radius: 40px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .session-join:hover { background: #4f52e0; }
+
+    .add-session {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      color: #6366f1;
+      font-weight: 600;
+      margin-top: 20px;
+      cursor: pointer;
+      padding: 12px;
+      border-radius: 16px;
+      transition: 0.2s;
+    }
+    .add-session:hover { background: #f0f4ff; }
+
+    /* Progress Chart */
+    .chart-container {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      height: 180px;
+      margin-top: 20px;
+      gap: 8px;
+    }
+    .chart-bar {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      width: 100%;
+      cursor: pointer;
+    }
+    .bar {
+      width: 100%;
+      height: 140px;
+      background: #edf2f7;
+      border-radius: 30px;
+      position: relative;
+      overflow: hidden;
+    }
+    .fill {
+      position: absolute;
+      bottom: 0;
+      width: 100%;
+      background: #6366f1;
+      border-radius: 30px;
+      transition: height 0.6s;
+    }
+    .day { color: #64748b; font-size: 12px; margin-top: 8px; }
+
+    /* Courses */
+    .courses-list { display: flex; flex-direction: column; gap: 12px; }
+    .course-item {
+      background: #f8fafd;
+      border-radius: 20px;
+      padding: 16px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border: 1px solid #edf2f7;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .course-item:hover { background: #e0e7ff; transform: translateX(6px); }
+
+    /* Modal */
+    .modal-overlay {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0,0,0,0.5);
+      backdrop-filter: blur(5px);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+    }
+    .modal-overlay.show {
+      opacity: 1;
+      pointer-events: all;
+    }
+    .modal-content {
+      background: white;
+      border-radius: 32px;
+      padding: 32px;
+      max-width: 450px;
+      width: 90%;
+      transform: scale(0.9) translateY(20px);
+      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .modal-overlay.show .modal-content {
+      transform: scale(1) translateY(0);
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 24px;
+      cursor: pointer;
+      color: #94a3b8;
+    }
+    .modal-body { margin-bottom: 24px; }
+    .modal-footer {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+    }
+    .modal-btn {
+      padding: 12px 24px;
+      border: none;
+      border-radius: 16px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+    .modal-btn-primary {
+      background: #6366f1;
+      color: white;
+    }
+    .modal-btn-primary:hover { background: #4f52e0; }
+    .modal-btn-secondary {
+      background: #f1f4f9;
+      color: #475569;
+    }
+    .modal-btn-secondary:hover { background: #e2e8f0; }
+
+    /* Add Session Form */
+    .form-group { margin-bottom: 20px; }
+    .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #475569;
+    }
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 14px 16px;
+      border: 2px solid #e2e8f0;
+      border-radius: 16px;
+      font-size: 15px;
+      transition: 0.2s;
+    }
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #6366f1;
+    }
+
+    /* Toast Notification */
+    .toast {
+      position: fixed;
+      bottom: 30px;
+      right: 30px;
+      background: white;
+      border-radius: 16px;
+      padding: 16px 24px;
+      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      transform: translateX(400px);
+      transition: transform 0.3s;
+      z-index: 1100;
+    }
+    .toast.show { transform: translateX(0); }
+    .toast.success { border-left: 4px solid #10b981; }
+    .toast.error { border-left: 4px solid #ef4444; }
+
+    .loader {
+      border: 4px solid #f3f3f3;
+      border-top: 4px solid #6366f1;
+      border-radius: 50%;
+      width: 40px;
+      height: 40px;
+      animation: spin 1s linear infinite;
+      margin: 20px auto;
+    }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+  </style>
+</head>
+<body>
+  <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
+  <div class="menu-overlay" id="menuOverlay"></div>
+
+  <div class="dashboard">
+    <!-- SIDEBAR - Only these open external pages -->
+    <aside class="sidebar" id="sidebar">
+      <div class="logo">Study<span>Hub</span></div>
+      <nav class="nav-menu">
+        <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></div>
+        <div class="nav-item" data-page="studyrooms"><i class="fas fa-users"></i><span>Study Rooms</span></div>
+        <div class="nav-item" data-page="whiteboard"><i class="fas fa-chalkboard"></i><span>Whiteboard</span></div>
+        <div class="nav-item" data-page="mycourses"><i class="fas fa-book-open"></i><span>My Courses</span></div>
+        <div class="nav-item" data-page="filelibrary"><i class="fas fa-folder"></i><span>File Library</span></div>
+        <div class="nav-item" data-page="leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></div>
+        <div class="nav-item" data-page="studystats"><i class="fas fa-chart-line"></i><span>Study Stats</span></div>
+        <div class="nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></div>
+      </nav>
+
+      <div class="upgrade-card" id="upgradeTrigger">
+        <h4>Upgrade Plan</h4>
+        <p>Get unlimited access to all study rooms and premium features</p>
+        <div class="upgrade-btn"><span><i class="fas fa-crown"></i> Go Premium</span> <i class="fas fa-arrow-right"></i></div>
+      </div>
+
+      <div class="logout-item" id="logoutTrigger">
+        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
+      </div>
+    </aside>
+
+    <!-- MAIN CONTENT - All actions work directly -->
+    <main class="main">
+      <!-- Welcome Header -->
+      <div class="welcome-header">
+        <div style="display: flex; align-items: center; gap: 20px;">
+          <div class="user-avatar" id="userAvatar">CU</div>
+          <div>
+            <h1 id="welcomeUser">Welcome back!</h1>
+            <p id="userUniversity">Loading your profile...</p>
+          </div>
+        </div>
+        <div class="create-room-btn" id="createRoomBtn">
+          <i class="fas fa-plus-circle"></i> Create Study Room
+        </div>
+      </div>
+
+      <!-- Two Column Section -->
+      <div class="two-column">
+        <!-- Active Study Rooms -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Active Study Rooms</h3>
+            <span class="live-badge"><i class="fas fa-circle"></i> <span id="liveCount">0</span> live</span>
+          </div>
+          <div class="rooms-grid" id="activeRooms"></div>
+        </div>
+
+        <!-- Upcoming Sessions -->
+        <div class="card">
+          <div class="card-header">
+            <h3>Upcoming Sessions</h3>
+            <i class="fas fa-ellipsis-h" style="color:#94a3b8;"></i>
+          </div>
+          <div class="sessions-list" id="upcomingSessions"></div>
+          <div class="add-session" id="addSessionBtn">
+            <i class="fas fa-plus-circle"></i> Add Session
+          </div>
+        </div>
+      </div>
+
+      <!-- Bottom Row -->
+      <div class="bottom-row">
+        <!-- Study Progress -->
+        <div class="card">
+          <div class="card-header">
+            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
+              <h3>Study Progress</h3>
+              <span class="week-selector" id="weekSelector" style="background:#f1f4f9; padding:6px 14px; border-radius:40px; font-size:14px; cursor:pointer;">
+                This Week <i class="fas fa-chevron-down"></i>
+              </span>
+            </div>
+          </div>
+          <div class="chart-container" id="progressChart"></div>
+          <div style="text-align: center; margin-top: 20px;" id="totalHours">Total: 0 hours</div>
+        </div>
+
+        <!-- My Courses -->
+        <div class="card">
+          <div class="card-header">
+            <h3>My Courses</h3>
+            <span class="view-all" id="viewAllCourses">View All</span>
+          </div>
+          <div class="courses-list" id="myCourses"></div>
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <!-- MODALS (All interactive features) -->
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal-content" id="modalContent"></div>
+  </div>
+
+  <!-- Toast Notification -->
+  <div class="toast" id="toast">
+    <i class="fas" id="toastIcon"></i>
+    <span id="toastMessage"></span>
+  </div>
+
+  <!-- Firebase -->
+  <script src="firebase-config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+
+  <script>
+    (function() {
+      // Check Firebase
+      if (typeof firebaseConfig === 'undefined') {
+        window.location.href = 'login.html';
+        return;
+      }
+
+      firebase.initializeApp(firebaseConfig);
+      const auth = firebase.auth();
+      const db = firebase.firestore();
+
+      // State
+      let currentUser = null;
+      let userData = null;
+
+      // Check authentication
+      auth.onAuthStateChanged(async (user) => {
+        if (!user) {
+          window.location.href = 'login.html';
+          return;
+        }
+
+        currentUser = user;
+        
+        // Load user data
+        await loadUserData();
+        
+        // Load all dashboard data
+        await Promise.all([
+          loadActiveRooms(),
+          loadUpcomingSessions(),
+          loadCourses(),
+          loadStudyProgress()
+        ]);
+
+        // Set up real-time listeners
+        setupRealtimeListeners();
+      });
+
+      // Load user data from Firestore
+      async function loadUserData() {
+        try {
+          const userDoc = await db.collection('users').doc(currentUser.uid).get();
+          
+          if (userDoc.exists) {
+            userData = userDoc.data();
+            
+            // Update UI
+            document.getElementById('welcomeUser').textContent = 
+              `Welcome back, ${userData.fullName || currentUser.displayName || 'Student'}!`;
+            
+            document.getElementById('userUniversity').textContent = 
+              userData.university || 'University not set';
+            
+            // Set avatar
+            const initials = (userData.fullName || currentUser.email || 'CU')
+              .split(' ')
+              .map(n => n[0])
+              .join('')
+              .toUpperCase()
+              .substring(0, 2);
+            document.getElementById('userAvatar').textContent = initials;
+          }
+        } catch (error) {
+          showToast('Error loading user data', 'error');
+        }
+      }
+
+      // Load active rooms
+      async function loadActiveRooms() {
+        try {
+          const roomsSnapshot = await db.collection('activeRooms')
+            .where('participants', 'array-contains', currentUser.uid)
+            .limit(4)
+            .get();
+
+          const roomsEl = document.getElementById('activeRooms');
+          
+          if (roomsSnapshot.empty) {
+            roomsEl.innerHTML = '<div class="room-card"><div class="room-title">No active rooms</div><p>Join a study room to get started</p></div>';
+            document.getElementById('liveCount').textContent = '0';
+            return;
+          }
+
+          roomsEl.innerHTML = roomsSnapshot.docs.map(doc => {
+            const room = doc.data();
+            return `
+              <div class="room-card" data-room-id="${doc.id}" onclick="window.joinRoom('${doc.id}')">
+                <div class="room-title">${room.title || 'Untitled Room'}</div>
+                <div class="room-meta">
+                  <span class="student-count"><i class="fas fa-user-graduate"></i> ${room.participants?.length || 1} Students</span>
+                  ${room.live ? '<span class="live-tag"><i class="fas fa-circle"></i> Live</span>' : '<span class="join-tag">Join</span>'}
+                </div>
+                <div class="room-time"><i class="far fa-clock"></i> ${room.duration || '00:00'}</div>
+              </div>
+            `;
+          }).join('');
+
+          document.getElementById('liveCount').textContent = roomsSnapshot.size;
+        } catch (error) {
+          console.error('Error loading rooms:', error);
+        }
+      }
+
+      // Load upcoming sessions
+      async function loadUpcomingSessions() {
+        try {
+          const sessionsSnapshot = await db.collection('upcomingSessions')
+            .where('attendees', 'array-contains', currentUser.uid)
+            .orderBy('time')
+            .limit(3)
+            .get();
+
+          const sessionsEl = document.getElementById('upcomingSessions');
+          
+          if (sessionsSnapshot.empty) {
+            sessionsEl.innerHTML = '<div class="session-item">No upcoming sessions</div>';
+            return;
+          }
+
+          sessionsEl.innerHTML = sessionsSnapshot.docs.map(doc => {
+            const session = doc.data();
+            return `
+              <div class="session-item" data-session-id="${doc.id}" onclick="window.viewSession('${doc.id}')">
+                <div>
+                  <h4>${session.code || 'Course'}</h4>
+                  <p>${session.title || ''}</p>
+                  <div class="session-time"><i class="far fa-clock"></i> ${session.time || 'TBD'}</div>
+                </div>
+                <div class="session-join" onclick="event.stopPropagation(); window.joinSession('${doc.id}')">Join</div>
+              </div>
+            `;
+          }).join('');
+        } catch (error) {
+          console.error('Error loading sessions:', error);
+        }
+      }
+
+      // Load courses
+      async function loadCourses() {
+        try {
+          const coursesSnapshot = await db.collection('courses')
+            .where('enrolledUsers', 'array-contains', currentUser.uid)
+            .limit(3)
+            .get();
+
+          const coursesEl = document.getElementById('myCourses');
+          
+          if (coursesSnapshot.empty) {
+            coursesEl.innerHTML = '<div class="course-item">No courses yet</div>';
+            return;
+          }
+
+          coursesEl.innerHTML = coursesSnapshot.docs.map(doc => {
+            const course = doc.data();
+            return `
+              <div class="course-item" data-course-id="${doc.id}" onclick="window.viewCourse('${doc.id}')">
+                <span>${course.name || course.code || 'Course'}</span>
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            `;
+          }).join('');
+        } catch (error) {
+          console.error('Error loading courses:', error);
+        }
+      }
+
+      // Load study progress
+      async function loadStudyProgress() {
+        try {
+          const progressDoc = await db.collection('studyProgress').doc(currentUser.uid).get();
+          
+          let hours = [2, 3, 4, 5, 3, 2, 1]; // Default
+          
+          if (progressDoc.exists) {
+            hours = progressDoc.data().hours || hours;
+          } else {
+            // Create default progress
+            await db.collection('studyProgress').doc(currentUser.uid).set({
+              hours: hours,
+              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+            });
+          }
+
+          renderProgressChart(hours);
+          
+          const total = hours.reduce((a, b) => a + b, 0);
+          document.getElementById('totalHours').textContent = `Total: ${total} hours this week`;
+        } catch (error) {
+          console.error('Error loading progress:', error);
+        }
+      }
+
+      // Render progress chart
+      function renderProgressChart(hours) {
+        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+        const max = Math.max(...hours, 8);
+        const progEl = document.getElementById('progressChart');
+        
+        progEl.innerHTML = hours.map((h, i) => `
+          <div class="chart-bar" onclick="window.showDailyProgress('${days[i]}', ${h})">
+            <div class="bar">
+              <div class="fill" style="height: ${(h/max)*100}%;"></div>
+            </div>
+            <span class="day">${days[i]}</span>
+          </div>
+        `).join('');
+      }
+
+      // Setup real-time listeners
+      function setupRealtimeListeners() {
+        // Listen for room changes
+        db.collection('activeRooms')
+          .where('participants', 'array-contains', currentUser.uid)
+          .onSnapshot((snapshot) => {
+            loadActiveRooms();
+          });
+
+        // Listen for session changes
+        db.collection('upcomingSessions')
+          .where('attendees', 'array-contains', currentUser.uid)
+          .onSnapshot(() => {
+            loadUpcomingSessions();
+          });
+      }
+
+      // ========== INTERACTIVE FEATURES (Work directly on dashboard) ==========
+
+      // Create Study Room
+      document.getElementById('createRoomBtn').addEventListener('click', () => {
+        showCreateRoomModal();
+      });
+
+      // Add Session
+      document.getElementById('addSessionBtn').addEventListener('click', () => {
+        showAddSessionModal();
+      });
+
+      // Week selector
+      document.getElementById('weekSelector').addEventListener('click', () => {
+        showWeekStatsModal();
+      });
+
+      // View all courses
+      document.getElementById('viewAllCourses').addEventListener('click', () => {
+        showAllCoursesModal();
+      });
+
+      // Upgrade plan
+      document.getElementById('upgradeTrigger').addEventListener('click', () => {
+        showUpgradeModal();
+      });
+
+      // MODAL FUNCTIONS
+      function showCreateRoomModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+          <div class="modal-header">
+            <h2>Create Study Room</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Room Title</label>
+              <input type="text" id="roomTitle" placeholder="e.g., Physics 201 Study Group">
+            </div>
+            <div class="form-group">
+              <label>Course Code</label>
+              <input type="text" id="roomCourse" placeholder="e.g., PHY 201">
+            </div>
+            <div class="form-group">
+              <label>Description</label>
+              <textarea id="roomDesc" rows="3" placeholder="What will you study?"></textarea>
+            </div>
+            <div class="form-group">
+              <label>Duration (hours)</label>
+              <input type="number" id="roomDuration" min="1" max="12" value="2">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="createRoom()">Create Room</button>
+          </div>
+        `;
+        
+        modal.classList.add('show');
+      }
+
+      function showAddSessionModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+          <div class="modal-header">
+            <h2>Add Study Session</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <div class="form-group">
+              <label>Session Title</label>
+              <input type="text" id="sessionTitle" placeholder="e.g., Organic Chemistry Review">
+            </div>
+            <div class="form-group">
+              <label>Course</label>
+              <select id="sessionCourse">
+                <option value="">Select course</option>
+                <option value="CHE 102">CHE 102 - Organic Chemistry</option>
+                <option value="PHY 201">PHY 201 - Physics</option>
+                <option value="MAT 202">MAT 202 - Calculus</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Date & Time</label>
+              <input type="datetime-local" id="sessionDateTime">
+            </div>
+            <div class="form-group">
+              <label>Duration (hours)</label>
+              <input type="number" id="sessionDuration" min="1" max="4" value="1">
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
+            <button class="modal-btn modal-btn-primary" onclick="addSession()">Add Session</button>
+          </div>
+        `;
+        
+        modal.classList.add('show');
+      }
+
+      function showWeekStatsModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+          <div class="modal-header">
+            <h2>Weekly Study Stats</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <p>Loading detailed statistics...</p>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-primary" onclick="closeModal()">Close</button>
+          </div>
+        `;
+        
+        modal.classList.add('show');
+        
+        // Load detailed stats
+        setTimeout(() => {
+          loadDetailedStats();
+        }, 500);
+      }
+
+      function showAllCoursesModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+          <div class="modal-header">
+            <h2>My Courses</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body" id="allCoursesList">
+            <div class="loader"></div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Close</button>
+          </div>
+        `;
+        
+        modal.classList.add('show');
+        
+        // Load all courses
+        loadAllCourses();
+      }
+
+      function showUpgradeModal() {
+        const modal = document.getElementById('modalOverlay');
+        const modalContent = document.getElementById('modalContent');
+        
+        modalContent.innerHTML = `
+          <div class="modal-header">
+            <h2>Upgrade to Premium</h2>
+            <button class="modal-close" onclick="closeModal()">&times;</button>
+          </div>
+          <div class="modal-body">
+            <h3 style="margin-bottom: 20px;">✨ Premium Features</h3>
+            <ul style="list-style: none; padding: 0;">
+              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Unlimited study rooms</li>
+              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Advanced whiteboard tools</li>
+              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Priority support</li>
+              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Download study materials</li>
+            </ul>
+            <div style="background: #f1f4f9; padding: 20px; border-radius: 16px; margin-top: 20px;">
+              <p style="font-size: 24px; font-weight: 700; color: #6366f1;">$9.99/month</p>
+              <p style="color: #64748b;">Cancel anytime</p>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Not now</button>
+            <button class="modal-btn modal-btn-primary" onclick="upgradeToPremium()">Upgrade Now</button>
+          </div>
+        `;
+        
+        modal.classList.add('show');
+      }
+
+      // ========== ACTION FUNCTIONS ==========
+      window.createRoom = async function() {
+        const title = document.getElementById('roomTitle')?.value;
+        const course = document.getElementById('roomCourse')?.value;
+        const desc = document.getElementById('roomDesc')?.value;
+        const duration = document.getElementById('roomDuration')?.value;
+
+        if (!title || !course) {
+          showToast('Please fill in required fields', 'error');
+          return;
+        }
+
+        try {
+          await db.collection('activeRooms').add({
+            title: `${course} – ${title}`,
+            course: course,
+            description: desc,
+            duration: `${String(duration).padStart(2, '0')}:00:00`,
+            live: true,
+            participants: [currentUser.uid],
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          closeModal();
+          showToast('Study room created successfully!', 'success');
+        } catch (error) {
+          showToast('Error creating room', 'error');
+        }
+      };
+
+      window.addSession = async function() {
+        const title = document.getElementById('sessionTitle')?.value;
+        const course = document.getElementById('sessionCourse')?.value;
+        const dateTime = document.getElementById('sessionDateTime')?.value;
+
+        if (!title || !course || !dateTime) {
+          showToast('Please fill in all fields', 'error');
+          return;
+        }
+
+        try {
+          const time = new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+          
+          await db.collection('upcomingSessions').add({
+            code: course,
+            title: title,
+            time: time,
+            datetime: dateTime,
+            attendees: [currentUser.uid],
+            createdBy: currentUser.uid,
+            createdAt: firebase.firestore.FieldValue.serverTimestamp()
+          });
+
+          closeModal();
+          showToast('Session added successfully!', 'success');
+        } catch (error) {
+          showToast('Error adding session', 'error');
+        }
+      };
+
+      window.joinRoom = async function(roomId) {
+        try {
+          await db.collection('activeRooms').doc(roomId).update({
+            participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+          });
+          showToast('Joined room successfully!', 'success');
+        } catch (error) {
+          showToast('Error joining room', 'error');
+        }
+      };
+
+      window.joinSession = async function(sessionId) {
+        try {
+          await db.collection('upcomingSessions').doc(sessionId).update({
+            attendees: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+          });
+          showToast('You joined the session!', 'success');
+        } catch (error) {
+          showToast('Error joining session', 'error');
+        }
+      };
+
+      window.viewSession = function(sessionId) {
+        showToast('Session details loaded', 'success');
+      };
+
+      window.viewCourse = function(courseId) {
+        showToast('Opening course materials...', 'success');
+      };
+
+      window.showDailyProgress = function(day, hours) {
+        showToast(`You studied ${hours} hours on ${day}`, 'success');
+      };
+
+      window.upgradeToPremium = function() {
+        closeModal();
+        showToast('Redirecting to payment...', 'success');
+        setTimeout(() => {
+          window.location.href = 'premium.html';
+        }, 1500);
+      };
+
+      // Load all courses
+      async function loadAllCourses() {
+        try {
+          const coursesSnapshot = await db.collection('courses')
+            .where('enrolledUsers', 'array-contains', currentUser.uid)
+            .get();
+
+          const coursesList = document.getElementById('allCoursesList');
+          
+          if (coursesSnapshot.empty) {
+            coursesList.innerHTML = '<p>No courses enrolled yet.</p>';
+            return;
+          }
+
+          coursesList.innerHTML = coursesSnapshot.docs.map(doc => {
+            const course = doc.data();
+            return `
+              <div class="course-item" style="margin-bottom: 10px;">
+                <span><strong>${course.code || 'Course'}</strong> - ${course.name || ''}</span>
+                <i class="fas fa-chevron-right"></i>
+              </div>
+            `;
+          }).join('');
+        } catch (error) {
+          console.error('Error loading courses:', error);
+        }
+      }
+
+      // Load detailed stats
+      async function loadDetailedStats() {
+        // Implementation for detailed stats
+      }
+
+      // Close modal
+      window.closeModal = function() {
+        document.getElementById('modalOverlay').classList.remove('show');
+      };
+
+      // Toast function
+      function showToast(message, type = 'success') {
+        const toast = document.getElementById('toast');
+        const toastIcon = document.getElementById('toastIcon');
+        const toastMessage = document.getElementById('toastMessage');
+        
+        toast.className = `toast ${type}`;
+        toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+        toastMessage.textContent = message;
+        
+        toast.classList.add('show');
+        
+        setTimeout(() => {
+          toast.classList.remove('show');
+        }, 3000);
+      }
+
+      // ========== SIDEBAR EXTERNAL PAGES ==========
+      document.querySelectorAll('.nav-item').forEach(item => {
+        item.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const page = item.dataset.page;
+          if (page && page !== 'dashboard') {
+            window.location.href = `${page}.html`;
+          }
+        });
+      });
+
+      // Logout
+      document.getElementById('logoutTrigger').addEventListener('click', async () => {
+        await auth.signOut();
+        window.location.href = 'login.html';
+      });
+
+      // Mobile sidebar toggle
+      const sidebar = document.getElementById('sidebar');
+      const menuToggle = document.getElementById('menuToggle');
+      const menuOverlay = document.getElementById('menuOverlay');
+
+      menuToggle.addEventListener('click', () => {
+        sidebar.classList.toggle('open');
+        menuOverlay.classList.toggle('active');
+      });
+
+      menuOverlay.addEventListener('click', () => {
+        sidebar.classList.remove('open');
+        menuOverlay.classList.remove('active');
+      });
+
+      // Expose functions globally
+      window.showToast = showToast;
+    })();
+  </script>
+</body>
+</html>

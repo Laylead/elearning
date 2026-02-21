@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub · Study Stats</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        body { background: #f5f7fb; min-height: 100vh; padding: 30px; }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 40px;
+        }
+        
+        .back-btn {
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            border-radius: 24px;
+            padding: 24px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+        }
+        
+        .stat-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            background: #e0e7ff;
+            color: #6366f1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 15px;
+        }
+        
+        .stat-value {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        
+        .stat-label {
+            color: #64748b;
+            font-size: 14px;
+        }
+        
+        .stat-change {
+            margin-top: 10px;
+            font-size: 14px;
+        }
+        
+        .positive { color: #10b981; }
+        .negative { color: #ef4444; }
+        
+        .chart-card {
+            background: white;
+            border-radius: 28px;
+            padding: 28px;
+            margin-bottom: 30px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.05);
+        }
+        
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .subject-breakdown {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .subject-item {
+            background: #f8fafd;
+            border-radius: 20px;
+            padding: 20px;
+        }
+        
+        .subject-name {
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+        
+        .subject-hours {
+            font-size: 24px;
+            font-weight: 700;
+            color: #6366f1;
+        }
+        
+        .subject-progress {
+            height: 6px;
+            background: #eef2f6;
+            border-radius: 10px;
+            margin-top: 15px;
+        }
+        
+        .subject-progress-fill {
+            height: 100%;
+            background: #6366f1;
+            border-radius: 10px;
+        }
+        
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #6366f1;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 40px auto;
+        }
+        
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <button class="back-btn" onclick="goToDashboard()">
+                <i class="fas fa-arrow-left"></i> Back to Dashboard
+            </button>
+            <h1>Study Statistics</h1>
+            <div style="width: 100px;"></div>
+        </div>
+        
+        <div id="statsContent">
+            <div class="loader"></div>
+        </div>
+    </div>
+    
+    <script>
+        if (typeof firebaseConfig === 'undefined') {
+            window.location.href = 'login.html';
+        }
+        
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+        
+        let statsChart = null;
+        
+        auth.onAuthStateChanged((user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            loadStats();
+        });
+        
+        async function loadStats() {
+            try {
+                const statsDoc = await db.collection('studyStats').doc(auth.currentUser.uid).get();
+                
+                let stats = {
+                    totalHours: 0,
+                    weeklyAverage: 0,
+                    streakDays: 0,
+                    roomsJoined: 0,
+                    weeklyData: [2, 3, 4, 5, 3, 2, 1],
+                    subjects: {
+                        'Mathematics': 15,
+                        'Physics': 12,
+                        'Chemistry': 8,
+                        'Computer Science': 10
+                    },
+                    monthlyComparison: 12,
+                    weeklyChange: 8
+                };
+                
+                if (statsDoc.exists) {
+                    stats = { ...stats, ...statsDoc.data() };
+                }
+                
+                displayStats(stats);
+                createCharts(stats);
+            } catch (error) {
+                console.error('Error loading stats:', error);
+            }
+        }
+        
+        function displayStats(stats) {
+            const html = `
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-clock"></i></div>
+                        <div class="stat-value">${stats.totalHours}</div>
+                        <div class="stat-label">Total Study Hours</div>
+                        <div class="stat-change positive">↑ ${stats.monthlyComparison}% from last month</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-calendar-week"></i></div>
+                        <div class="stat-value">${stats.weeklyAverage}</div>
+                        <div class="stat-label">Weekly Average</div>
+                        <div class="stat-change ${stats.weeklyChange >= 0 ? 'positive' : 'negative'}">
+                            ${stats.weeklyChange >= 0 ? '↑' : '↓'} ${Math.abs(stats.weeklyChange)}% from last week
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-fire"></i></div>
+                        <div class="stat-value">${stats.streakDays}</div>
+                        <div class="stat-label">Day Streak</div>
+                        <div class="stat-change positive">Best: ${stats.streakDays} days</div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon"><i class="fas fa-users"></i></div>
+                        <div class="stat-value">${stats.roomsJoined}</div>
+                        <div class="stat-label">Rooms Joined</div>
+                        <div class="stat-change">Total sessions</div>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <div class="chart-header">
+                        <h2>Weekly Study Pattern</h2>
+                        <select onchange="changeWeekView(this.value)" style="padding: 8px 16px; border-radius: 30px; border: 2px solid #eef2f6;">
+                            <option value="week">This Week</option>
+                            <option value="month">This Month</option>
+                            <option value="year">This Year</option>
+                        </select>
+                    </div>
+                    <div class="chart-container">
+                        <canvas id="weeklyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h2 style="margin-bottom: 20px;">Subject Breakdown</h2>
+                    <div class="subject-breakdown">
+                        ${Object.entries(stats.subjects).map(([subject, hours]) => {
+                            const total = Object.values(stats.subjects).reduce((a, b) => a + b, 0);
+                            const percentage = (hours / total) * 100;
+                            return `
+                                <div class="subject-item">
+                                    <div class="subject-name">${subject}</div>
+                                    <div class="subject-hours">${hours}h</div>
+                                    <div class="subject-progress">
+                                        <div class="subject-progress-fill" style="width: ${percentage}%;"></div>
+                                    </div>
+                                </div>
+                            `;
+                        }).join('')}
+                    </div>
+                </div>
+                
+                <div class="chart-card">
+                    <h2 style="margin-bottom: 20px;">Productivity Heatmap</h2>
+                    <div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;">
+                        ${generateHeatmap()}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('statsContent').innerHTML = html;
+        }
+        
+        function generateHeatmap() {
+            const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+            const intensities = [0.2, 0.5, 0.8, 0.4, 0.9, 0.3, 0.1];
+            
+            return days.map((day, i) => `
+                <div style="text-align: center;">
+                    <div style="background: rgba(99, 102, 241, ${intensities[i]}); 
+                                width: 100%; 
+                                padding-bottom: 100%; 
+                                border-radius: 12px;
+                                margin-bottom: 5px;"></div>
+                    <span style="font-size: 12px;">${day}</span>
+                </div>
+            `).join('');
+        }
+        
+        function createCharts(stats) {
+            const ctx = document.getElementById('weeklyChart')?.getContext('2d');
+            if (!ctx) return;
+            
+            if (statsChart) statsChart.destroy();
+            
+            statsChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                    datasets: [{
+                        label: 'Study Hours',
+                        data: stats.weeklyData,
+                        borderColor: '#6366f1',
+                        backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                        tension: 0.4,
+                        fill: true
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false }
+                    },
+                    scales: {
+                        y: { beginAtZero: true }
+                    }
+                }
+            });
+        }
+        
+        window.changeWeekView = function(view) {
+            // Implement different views
+            console.log('Changing to:', view);
+        };
+        
+        window.goToDashboard = function() {
+            window.location.href = 'index.html';
+        };
+    </script>
+</body>
+</html>
