@@ -3,12 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-    <title>CrowdShop · live group buying</title>
+    <title>CrowdShop · group buying</title>
     <!-- Material Icons + Google Font -->
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,opsz,wght@0,14..32,100..900;1,14..32,100..900&display=swap" rel="stylesheet">
     <style>
-        /* ----- RESET & GLOBAL ----- */
         * {
             margin: 0;
             padding: 0;
@@ -490,6 +489,10 @@
                 <div class="faq-answer">You pool with others to get lower prices. Once the goal is met, orders are placed.</div>
                 <div class="faq-item" data-faq="2"><span>What if a campaign fails?</span> <span class="material-icons rotate-icon">expand_more</span></div>
                 <div class="faq-answer">Funds are fully refunded to your wallet within 24h.</div>
+                <div class="faq-item" data-faq="3"><span>Are there fees?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                <div class="faq-answer">No hidden fees. You only pay the group price.</div>
+                <div class="faq-item" data-faq="4"><span>How to withdraw?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                <div class="faq-answer">Go to Wallet → Withdraw (available after 7 days).</div>
             </div>
         </div>
 
@@ -654,6 +657,9 @@
     function showDepositPopup() {
         popupTitle.innerText = 'Deposit Funds';
         popupAmount.value = '5000';
+        popupAmount.style.display = 'block';
+        popupConfirm.style.display = 'inline-block';
+        popupCancel.innerText = 'Cancel';
         popupOverlay.classList.add('show');
     }
 
@@ -661,7 +667,7 @@
     popupConfirm?.addEventListener('click', async () => {
         const amount = parseFloat(popupAmount.value) || 0;
         if (amount <= 0) return alert('Enter valid amount');
-        // In real app, call Firebase to update wallet
+        // Simulate deposit (in real app, call Firebase to update wallet)
         alert(`✅ Deposited ₦${amount} (simulated)`);
         popupOverlay.classList.remove('show');
     });
@@ -671,29 +677,26 @@
 
     // View All Orders button -> popup
     document.getElementById('viewAllOrders')?.addEventListener('click', () => {
-        popupTitle.innerText = 'All Orders';
+        popupTitle.innerText = 'All Orders (simulated)';
         popupAmount.style.display = 'none';
         popupConfirm.style.display = 'none';
         popupCancel.innerText = 'Close';
         popupOverlay.classList.add('show');
-        // reset after
-        setTimeout(() => { popupAmount.style.display = 'block'; popupConfirm.style.display = 'inline-block'; popupCancel.innerText = 'Cancel'; }, 500);
     });
 
     // campaign view / action -> popup
     document.addEventListener('click', (e) => {
         if (e.target.closest('.view-campaign')) {
             const id = e.target.closest('.view-campaign').dataset.id;
-            popupTitle.innerText = 'Campaign Details';
+            popupTitle.innerText = `Campaign Details (ID: ${id})`;
             popupAmount.style.display = 'none';
             popupConfirm.style.display = 'none';
             popupCancel.innerText = 'Close';
             popupOverlay.classList.add('show');
-            setTimeout(() => { popupAmount.style.display = 'block'; popupConfirm.style.display = 'inline-block'; popupCancel.innerText = 'Cancel'; }, 500);
         }
         if (e.target.closest('.campaign-action')) {
             const btn = e.target.closest('.campaign-action');
-            popupTitle.innerText = `Action: ${btn.dataset.action || 'default'}`;
+            popupTitle.innerText = `Action: ${btn.dataset.action || 'default'} (popup)`;
             popupAmount.style.display = 'none';
             popupConfirm.style.display = 'none';
             popupCancel.innerText = 'Close';
@@ -701,7 +704,7 @@
         }
     });
 
-    // FAQ expand/collapse
+    // FAQ expand/collapse (all FAQ items now work)
     document.querySelectorAll('.faq-item').forEach(item => {
         item.addEventListener('click', () => {
             item.classList.toggle('open');
@@ -716,7 +719,7 @@
         });
     });
 
-    // mobile / desktop nav active highlight
+    // mobile / desktop nav active highlight + label lighting
     function setActiveNav(navId) {
         document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
             if (el.dataset.nav === navId) el.classList.add('active');
@@ -727,13 +730,48 @@
         el.addEventListener('click', () => {
             const nav = el.dataset.nav;
             setActiveNav(nav);
-            // swift smooth scroll simulation (could route)
-            alert(`Navigating to ${nav} (replace with actual routing)`);
+            // simulate route change with popup (instead of alert for better UX)
+            popupTitle.innerText = `Navigating to ${nav} (demo)`;
+            popupAmount.style.display = 'none';
+            popupConfirm.style.display = 'none';
+            popupCancel.innerText = 'Close';
+            popupOverlay.classList.add('show');
+            // reset input after close
+            setTimeout(() => {
+                if (!popupOverlay.classList.contains('show')) {
+                    popupAmount.style.display = 'block';
+                    popupConfirm.style.display = 'inline-block';
+                }
+            }, 500);
         });
     });
 
     // logout
     logoutBtn?.addEventListener('click', () => signOut(auth).then(() => window.location.href = '/login.html'));
+
+    // Transaction history dropdown item
+    document.getElementById('viewHistory')?.addEventListener('click', () => {
+        walletDropdown.classList.remove('show');
+        popupTitle.innerText = 'Transaction History';
+        popupAmount.style.display = 'none';
+        popupConfirm.style.display = 'none';
+        popupCancel.innerText = 'Close';
+        popupOverlay.classList.add('show');
+    });
+
+    // additional global: ensure any leftover .btn etc open popup (extra safety)
+    document.querySelectorAll('.btn-outline, .btn-primary, .btn-orange, .btn-blue').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            // avoid double for already handled
+            if (e.target.closest('.view-campaign') || e.target.closest('.campaign-action') || e.target.closest('#viewAllOrders') || e.target.closest('.deposit-btn') || e.target.closest('.deposit-large')) return;
+            // generic popup for any other button
+            popupTitle.innerText = 'Action (demo)';
+            popupAmount.style.display = 'none';
+            popupConfirm.style.display = 'none';
+            popupCancel.innerText = 'Close';
+            popupOverlay.classList.add('show');
+        });
+    });
 </script>
 
 <!-- firebase-config.js (external) must be present in same directory -->
