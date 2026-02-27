@@ -276,6 +276,11 @@
             font-weight: 600; color: #1a4870; cursor: pointer; transition: 0.2s;
         }
         .btn-primary:hover { background: white; transform: translateY(-2px); }
+        .btn-success {
+            background: #1f8a4a; color: white; padding: 8px 22px; border-radius: 60px;
+            font-weight: 600; cursor: pointer; transition: 0.2s; border: none;
+        }
+        .btn-success:hover { background: #0f632b; transform: translateY(-2px); }
         .btn-orange {
             background: rgba(253, 239, 229, 0.9); color: #b1571b; padding: 8px 22px; border-radius: 60px;
             font-weight: 600; cursor: pointer; transition: 0.2s;
@@ -334,7 +339,7 @@
         .popup-overlay.show { opacity: 1; visibility: visible; }
         .popup-card {
             background: rgba(255,255,255,0.95); backdrop-filter: blur(40px);
-            border-radius: 48px; padding: 32px; max-width: 400px; width: 90%;
+            border-radius: 48px; padding: 32px; max-width: 450px; width: 90%;
             box-shadow: 0 50px 80px -20px #0b2d4a, 0 0 0 1px rgba(255,255,255,0.9);
             transform: scale(0.8); transition: transform 0.4s cubic-bezier(0.2,0.9,0.3,1.3);
         }
@@ -344,12 +349,19 @@
             width: 100%; padding: 18px 22px; border-radius: 60px; border: 1px solid #cde0ee;
             font-size: 1.2rem; margin-bottom: 20px; background: white;
         }
-        .popup-actions { display: flex; gap: 16px; justify-content: flex-end; }
+        .popup-content {
+            margin-bottom: 24px;
+            line-height: 2;
+            color: #1f4a6b;
+            font-size: 1.1rem;
+        }
+        .popup-actions { display: flex; gap: 16px; justify-content: flex-end; margin-top: 20px; }
         .popup-btn {
             padding: 14px 28px; border-radius: 60px; font-weight: 600; border: none; cursor: pointer;
         }
         .popup-btn-primary { background: #1d8a4a; color: white; }
         .popup-btn-outline { background: transparent; border: 1px solid #306f9e; color: #1e5780; }
+        .popup-btn-danger { background: #dc3545; color: white; }
 
         /* mini dropdown (wallet popup) */
         .dropdown-menu {
@@ -401,6 +413,16 @@
             font-weight: 600;
         }
         .mobile-nav-item.active .material-icons { color: #1d5d8e; }
+
+        /* transaction items */
+        .transaction-item {
+            padding: 12px 0;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .green-check { color: #1f8a4a; }
 
         @media (max-width: 1000px) {
             .campaign-row { grid-template-columns: 1fr; }
@@ -489,9 +511,9 @@
                 <div class="faq-answer">You pool with others to get lower prices. Once the goal is met, orders are placed.</div>
                 <div class="faq-item" data-faq="2"><span>What if a campaign fails?</span> <span class="material-icons rotate-icon">expand_more</span></div>
                 <div class="faq-answer">Funds are fully refunded to your wallet within 24h.</div>
-                <div class="faq-item" data-faq="3"><span>Are there any hidden fees?</span> <span class="material-icons rotate-icon">expand_more</span></div>
-                <div class="faq-answer">No hidden fees! You only pay the group price displayed.</div>
-                <div class="faq-item" data-faq="4"><span>How do I withdraw money?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                <div class="faq-item" data-faq="3"><span>Are there any fees?</span> <span class="material-icons rotate-icon">expand_more</span></div>
+                <div class="faq-answer">No hidden fees. You only pay the group price.</div>
+                <div class="faq-item" data-faq="4"><span>How do I withdraw funds?</span> <span class="material-icons rotate-icon">expand_more</span></div>
                 <div class="faq-answer">Go to Wallet → Withdraw. Funds are available after 7 days.</div>
             </div>
         </div>
@@ -506,12 +528,12 @@
     </main>
 </div>
 
-<!-- GLOBAL POPUP MODAL (deposit, action) -->
+<!-- GLOBAL POPUP MODAL -->
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card" id="popupCard">
-        <div class="popup-title" id="popupTitle">Deposit Funds</div>
-        <input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">
-        <div class="popup-actions">
+        <div class="popup-title" id="popupTitle">Title</div>
+        <div id="popupContentArea"></div>
+        <div class="popup-actions" id="popupActions">
             <button class="popup-btn popup-btn-outline" id="popupCancel">Cancel</button>
             <button class="popup-btn popup-btn-primary" id="popupConfirm">Confirm</button>
         </div>
@@ -522,7 +544,7 @@
     // ========== EXTERNAL FIREBASE CONFIG ==========
     import { auth, db } from './firebase-config.js';
     import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-    import { collection, onSnapshot, doc, query, where, getDocs } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+    import { collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
 
     // ----- ELEMENTS -----
     const walletDisplay = document.getElementById('walletDisplay');
@@ -542,110 +564,201 @@
     const walletDropdown = document.getElementById('walletDropdown');
     const popupOverlay = document.getElementById('popupOverlay');
     const popupTitle = document.getElementById('popupTitle');
-    const popupAmount = document.getElementById('popupAmount');
     const popupConfirm = document.getElementById('popupConfirm');
     const popupCancel = document.getElementById('popupCancel');
+    const popupContentArea = document.getElementById('popupContentArea');
+    const popupActions = document.getElementById('popupActions');
+    const viewAllOrders = document.getElementById('viewAllOrders');
+    const depositTopBtn = document.getElementById('depositTopBtn');
+    const depositLargeBtn = document.getElementById('depositLargeBtn');
+    const quickDeposit = document.getElementById('quickDeposit');
+    const viewHistory = document.getElementById('viewHistory');
 
-    // ========== CHECK LOGIN STATUS ==========
+    // State
+    let currentUser = null;
+    let currentBalance = 42000;
+    let campaigns = [];
+    let reservations = [];
+
+    // ----- AUTH GUARD -----
     onAuthStateChanged(auth, async (user) => {
         if (!user) { 
-            window.location.href = 'login.html'; 
-            return;
+            window.location.href = '/login.html'; 
+            return; 
         }
 
-        // User is logged in - update UI
+        currentUser = user;
+        
+        // populate user info
         const displayName = user.displayName || 'Crowd Buyer';
         greetingHi.innerText = `Hi, ${displayName.split(' ')[0]}`;
         sidebarUserName.innerText = displayName;
         avatarDiv.innerText = (displayName.charAt(0) || 'U').toUpperCase();
 
-        // Wallet listener
+        // ----- WALLET LISTENER -----
         const userRef = doc(db, 'users', user.uid);
         onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                const balance = data.walletBalance ?? 42000;
-                walletDisplay.innerHTML = `<span class="material-icons">account_balance_wallet</span> ₦${balance.toLocaleString()}`;
-                walletLarge.innerText = `₦${balance.toLocaleString()}`;
-                statWalletVal.innerText = `₦${balance.toLocaleString()}`;
+                currentBalance = data.walletBalance ?? 42000;
+                const formatted = `₦${currentBalance.toLocaleString()}`;
+                walletDisplay.innerHTML = `<span class="material-icons">account_balance_wallet</span> ${formatted}`;
+                walletLarge.innerText = formatted;
+                statWalletVal.innerText = formatted;
+            } else {
+                // Create user document if it doesn't exist
+                updateDoc(userRef, { walletBalance: 42000, email: user.email }).catch(() => {
+                    // If document doesn't exist, set it
+                    import { setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+                    setDoc(userRef, { walletBalance: 42000, email: user.email, createdAt: serverTimestamp() });
+                });
             }
         });
 
-        // Orders listener
+        // ----- RESERVATIONS (orders) -----
         const reservationsQuery = query(collection(db, 'reservations'), where('userId', '==', user.uid));
         onSnapshot(reservationsQuery, (snap) => {
+            reservations = [];
             let totalUnits = 0;
             let ordersHtml = '';
             snap.forEach(d => {
-                const r = d.data();
+                const r = { id: d.id, ...d.data() };
+                reservations.push(r);
                 totalUnits += r.units || 0;
+                const statusClass = r.status === 'in_transit' ? 'status-green' : 'status-yellow';
+                const icon = r.status === 'in_transit' ? 'local_shipping' : 'hourglass_empty';
+                const statusText = r.status === 'in_transit' ? 'In Transit' : 'Funding';
                 ordersHtml += `<tr><td>${r.productName}</td><td>₦${r.price?.toLocaleString()}</td><td>${r.units}</td>
-                    <td><span class="${r.status === 'in_transit' ? 'status-green' : 'status-yellow'}">
-                    <span class="material-icons">${r.status === 'in_transit' ? 'local_shipping' : 'hourglass_empty'}</span> 
-                    ${r.status === 'in_transit' ? 'In Transit' : 'Funding'}</span></td>
+                    <td><span class="${statusClass}"><span class="material-icons">${icon}</span> ${statusText}</span></td>
                     <td>${r.eta || '—'}</td></tr>`;
             });
             ordersBody.innerHTML = ordersHtml || '<tr><td colspan="5" style="text-align:center;">No reserved slots</td></tr>';
             statUnits.innerText = totalUnits;
+            
+            // Update joined campaigns count
+            const uniqueCampaigns = new Set(reservations.map(r => r.campaignId));
+            statJoined.innerText = uniqueCampaigns.size;
         });
 
-        // Campaigns
+        // ----- CAMPAIGNS LISTENER -----
         const campaignsQuery = collection(db, 'campaigns');
         onSnapshot(campaignsQuery, (snap) => {
+            campaigns = [];
             let campaignsHtml = '';
             snap.forEach(doc => {
-                const c = doc.data();
-                campaignsHtml += `<div class="campaign-card">
+                const c = { id: doc.id, ...doc.data() };
+                campaigns.push(c);
+                
+                // Check if user has reserved this campaign
+                const userReservation = reservations.find(r => r.campaignId === doc.id);
+                const reservedUnits = userReservation ? userReservation.units : 0;
+                
+                const statusBadge = c.status === 'active' ? 'badge-status' : 'badge-warning';
+                const icon = c.status === 'active' ? 'bookmark' : 'pending';
+                const statusText = c.status === 'active' ? 'Active' : 'Ending Soon';
+                const progressPercent = Math.min(100, Math.round((c.reserved / c.goal) * 100));
+                
+                campaignsHtml += `<div class="campaign-card" data-campaign-id="${doc.id}">
                     <div class="campaign-img" style="background-image:url('${c.imageUrl || 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text='+c.name}')"></div>
-                    <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">${c.reserved || 0}/${c.goal || 100}</span></div>
-                    <div class="price-tag">₦${c.price?.toLocaleString() || '0'} per unit</div>
-                    <div class="progress-container"><div class="progress-bar-bg"><div class="progress-fill" style="width:${c.fundingPercentage || 50}%"></div></div></div>
-                    <div style="display:flex; gap:12px; margin-top:16px;">
-                        <button class="btn-outline view-campaign-btn" data-id="${doc.id}">View Details</button>
-                        <button class="btn-primary campaign-action-btn" data-id="${doc.id}">Join Campaign</button>
+                    <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">${c.reserved}/${c.goal}</span></div>
+                    <div class="price-tag">₦${c.price?.toLocaleString()} per unit</div>
+                    <div class="progress-container"><div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div><div class="funding-text"><span>${progressPercent}% Funded</span></div></div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; align-items:center;">
+                        <span class="${statusBadge}"><span class="material-icons">${icon}</span> ${statusText}</span>
+                        ${reservedUnits > 0 ? 
+                            `<span class="badge-status"><span class="material-icons">check_circle</span> You have ${reservedUnits}</span>` : 
+                            `<button class="btn-success join-campaign" data-id="${doc.id}" data-price="${c.price}">Join Pool</button>`
+                        }
+                        <button class="btn-outline view-campaign" data-id="${doc.id}">Details</button>
                     </div>
                 </div>`;
             });
             campaignsContainer.innerHTML = campaignsHtml || '<p>No active campaigns</p>';
         });
 
-        // Joined campaigns count
-        const reservationsSnap = await getDocs(query(collection(db, 'reservations'), where('userId', '==', user.uid)));
-        const uniqueCampaigns = new Set(reservationsSnap.docs.map(d => d.data().campaignId));
-        statJoined.innerText = uniqueCampaigns.size;
-
-        // Transactions
+        // ----- TRANSACTIONS LISTENER -----
         const txQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid));
         onSnapshot(txQuery, (snap) => {
             let txHtml = '';
             snap.forEach(d => {
                 const t = d.data();
-                txHtml += `<div style="padding:8px 0;"><span class="material-icons" style="color:#0f6937; vertical-align:middle;">check_circle</span> ₦${t.amount?.toLocaleString()} ${t.description || t.type}</div>`;
+                txHtml += `<div class="transaction-item"><span class="material-icons green-check">check_circle</span> <span>₦${t.amount?.toLocaleString()} - ${t.description || t.type || 'Transaction'}</span></div>`;
             });
-            transactionsDiv.innerHTML = txHtml || '<div>No recent transactions</div>';
+            transactionsDiv.innerHTML = txHtml || '<div class="transaction-item">No recent transactions</div>';
         });
     });
 
-    // ========== BUTTON FUNCTIONALITY - ALL BUTTONS WORK ==========
-    
-    // 1. DEPOSIT BUTTONS - opens funding popup
-    function showDepositPopup() {
-        popupTitle.innerText = 'Deposit Funds';
-        popupAmount.value = '5000';
-        popupAmount.style.display = 'block';
-        popupConfirm.style.display = 'inline-block';
-        popupCancel.innerText = 'Cancel';
+    // ----- POPUP FUNCTIONS -----
+    function showPopup(title, content, showActions = true, confirmText = 'Confirm', cancelText = 'Cancel', confirmHandler = null) {
+        popupTitle.innerText = title;
+        popupContentArea.innerHTML = content;
+        
+        if (showActions) {
+            popupActions.style.display = 'flex';
+            popupConfirm.innerText = confirmText;
+            popupCancel.innerText = cancelText;
+            
+            // Remove old handlers and add new one
+            const newConfirm = popupConfirm.cloneNode(true);
+            const newCancel = popupCancel.cloneNode(true);
+            popupConfirm.parentNode.replaceChild(newConfirm, popupConfirm);
+            popupCancel.parentNode.replaceChild(newCancel, popupCancel);
+            
+            newConfirm.addEventListener('click', async () => {
+                if (confirmHandler) {
+                    await confirmHandler();
+                }
+                popupOverlay.classList.remove('show');
+            });
+            
+            newCancel.addEventListener('click', () => {
+                popupOverlay.classList.remove('show');
+            });
+        } else {
+            popupActions.style.display = 'none';
+        }
+        
         popupOverlay.classList.add('show');
     }
 
-    document.getElementById('depositTopBtn')?.addEventListener('click', showDepositPopup);
-    document.getElementById('depositLargeBtn')?.addEventListener('click', showDepositPopup);
-    document.getElementById('quickDeposit')?.addEventListener('click', () => {
-        walletDropdown.classList.remove('show');
-        showDepositPopup();
-    });
+    function showDepositPopup() {
+        const content = `
+            <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" value="5000" min="1000">
+            <p style="color:#666; margin-top:8px;">Minimum deposit: ₦1,000</p>
+        `;
+        
+        showPopup('Deposit Funds', content, true, 'Deposit', 'Cancel', async () => {
+            const amount = parseFloat(document.getElementById('depositAmount').value);
+            if (isNaN(amount) || amount < 1000) {
+                alert('Please enter a valid amount (minimum ₦1,000)');
+                return;
+            }
+            
+            if (!currentUser) return;
+            
+            try {
+                const userRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userRef, {
+                    walletBalance: increment(amount)
+                });
+                
+                await addDoc(collection(db, 'transactions'), {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    type: 'deposit',
+                    description: 'Wallet deposit',
+                    timestamp: serverTimestamp()
+                });
+                
+                showPopup('Success', `<div class="popup-content">✅ Successfully deposited ₦${amount.toLocaleString()}</div>`, false);
+            } catch (error) {
+                console.error('Deposit error:', error);
+                alert('Error processing deposit');
+            }
+        });
+    }
 
-    // 2. WALLET DROPDOWN
+    // ----- WALLET DROPDOWN -----
     document.querySelector('.wallet-pill')?.addEventListener('click', (e) => {
         e.stopPropagation();
         const rect = e.currentTarget.getBoundingClientRect();
@@ -655,117 +768,251 @@
     });
     
     document.addEventListener('click', (e) => {
-        if (!e.target.closest('.wallet-pill')) walletDropdown.classList.remove('show');
+        if (!e.target.closest('.wallet-pill')) {
+            walletDropdown.classList.remove('show');
+        }
     });
 
-    // 3. VIEW HISTORY
-    document.getElementById('viewHistory')?.addEventListener('click', () => {
+    // ----- DEPOSIT BUTTONS -----
+    depositTopBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showDepositPopup();
+    });
+    
+    depositLargeBtn?.addEventListener('click', (e) => {
+        e.preventDefault();
+        showDepositPopup();
+    });
+    
+    quickDeposit?.addEventListener('click', () => {
         walletDropdown.classList.remove('show');
-        popupTitle.innerText = 'Transaction History';
-        popupAmount.style.display = 'none';
-        popupConfirm.style.display = 'none';
-        popupCancel.innerText = 'Close';
-        popupOverlay.classList.add('show');
+        showDepositPopup();
     });
 
-    // 4. VIEW ALL ORDERS
-    document.getElementById('viewAllOrders')?.addEventListener('click', () => {
-        popupTitle.innerText = 'All Orders';
-        popupAmount.style.display = 'none';
-        popupConfirm.style.display = 'none';
-        popupCancel.innerText = 'Close';
-        popupOverlay.classList.add('show');
+    // ----- VIEW HISTORY -----
+    viewHistory?.addEventListener('click', () => {
+        walletDropdown.classList.remove('show');
+        showPopup('Transaction History', '<div class="popup-content">Loading transactions...</div>', false);
+        
+        // Load transactions
+        if (currentUser) {
+            const txQuery = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
+            getDocs(txQuery).then(snap => {
+                let content = '<div class="popup-content">';
+                if (snap.empty) {
+                    content += 'No transactions found';
+                } else {
+                    snap.forEach(doc => {
+                        const t = doc.data();
+                        content += `• ₦${t.amount?.toLocaleString()} - ${t.description || t.type}<br>`;
+                    });
+                }
+                content += '</div>';
+                popupContentArea.innerHTML = content;
+            });
+        }
     });
 
-    // 5. CAMPAIGN BUTTONS (View Details & Join)
-    document.addEventListener('click', (e) => {
-        if (e.target.closest('.view-campaign-btn')) {
-            const id = e.target.closest('.view-campaign-btn').dataset.id;
-            popupTitle.innerText = `Campaign Details (ID: ${id})`;
-            popupAmount.style.display = 'none';
-            popupConfirm.style.display = 'none';
-            popupCancel.innerText = 'Close';
-            popupOverlay.classList.add('show');
+    // ----- VIEW ALL ORDERS -----
+    viewAllOrders?.addEventListener('click', (e) => {
+        e.preventDefault();
+        
+        if (reservations.length === 0) {
+            showPopup('My Orders', '<div class="popup-content">No orders found</div>', false);
+            return;
         }
         
-        if (e.target.closest('.campaign-action-btn')) {
-            const id = e.target.closest('.campaign-action-btn').dataset.id;
-            popupTitle.innerText = `Join Campaign`;
-            popupAmount.value = '1'; // units
-            popupAmount.style.display = 'block';
-            popupAmount.placeholder = 'Number of units';
-            popupConfirm.style.display = 'inline-block';
-            popupConfirm.innerText = 'Join Now';
-            popupCancel.innerText = 'Cancel';
-            popupOverlay.classList.add('show');
+        let content = '<div class="popup-content">';
+        reservations.forEach(r => {
+            content += `• ${r.productName} - ${r.units} unit(s) - ₦${(r.price * r.units).toLocaleString()} - ${r.status}<br>`;
+        });
+        content += '</div>';
+        
+        showPopup('My Orders', content, false);
+    });
+
+    // ----- JOIN CAMPAIGN -----
+    document.addEventListener('click', async (e) => {
+        if (e.target.closest('.join-campaign')) {
+            e.preventDefault();
+            const btn = e.target.closest('.join-campaign');
+            const campaignId = btn.dataset.id;
+            const price = parseFloat(btn.dataset.price);
+            
+            const campaign = campaigns.find(c => c.id === campaignId);
+            if (!campaign) return;
+            
+            const content = `
+                <div class="popup-content">
+                    <p><strong>${campaign.name}</strong></p>
+                    <p>Price per unit: ₦${price.toLocaleString()}</p>
+                    <p>Available: ${campaign.goal - campaign.reserved} units</p>
+                    <p>Your balance: ₦${currentBalance.toLocaleString()}</p>
+                    <input type="number" id="joinUnits" class="popup-input" placeholder="Number of units" value="1" min="1" max="${campaign.goal - campaign.reserved}">
+                </div>
+            `;
+            
+            showPopup('Join Campaign', content, true, 'Join Now', 'Cancel', async () => {
+                const units = parseInt(document.getElementById('joinUnits').value);
+                if (isNaN(units) || units < 1 || units > (campaign.goal - campaign.reserved)) {
+                    alert('Invalid number of units');
+                    return;
+                }
+                
+                const totalCost = price * units;
+                
+                if (totalCost > currentBalance) {
+                    alert(`Insufficient balance. You need ₦${totalCost.toLocaleString()}`);
+                    return;
+                }
+                
+                if (!currentUser) return;
+                
+                try {
+                    // Update user wallet
+                    const userRef = doc(db, 'users', currentUser.uid);
+                    await updateDoc(userRef, {
+                        walletBalance: increment(-totalCost)
+                    });
+                    
+                    // Create reservation
+                    await addDoc(collection(db, 'reservations'), {
+                        userId: currentUser.uid,
+                        campaignId: campaignId,
+                        productName: campaign.name,
+                        price: price,
+                        units: units,
+                        status: 'funding',
+                        createdAt: serverTimestamp()
+                    });
+                    
+                    // Update campaign reserved count
+                    const campaignRef = doc(db, 'campaigns', campaignId);
+                    await updateDoc(campaignRef, {
+                        reserved: increment(units)
+                    });
+                    
+                    // Add transaction
+                    await addDoc(collection(db, 'transactions'), {
+                        userId: currentUser.uid,
+                        amount: totalCost,
+                        type: 'purchase',
+                        description: `Purchased ${units} unit(s) of ${campaign.name}`,
+                        timestamp: serverTimestamp()
+                    });
+                    
+                    showPopup('Success', `<div class="popup-content">✅ Successfully joined ${campaign.name} with ${units} unit(s) for ₦${totalCost.toLocaleString()}</div>`, false);
+                } catch (error) {
+                    console.error('Join campaign error:', error);
+                    alert('Error joining campaign');
+                }
+            });
+        }
+        
+        if (e.target.closest('.view-campaign')) {
+            e.preventDefault();
+            const btn = e.target.closest('.view-campaign');
+            const campaignId = btn.dataset.id;
+            
+            const campaign = campaigns.find(c => c.id === campaignId);
+            if (!campaign) return;
+            
+            const userReservation = reservations.find(r => r.campaignId === campaignId);
+            const reservedText = userReservation ? `\nYou have reserved: ${userReservation.units} unit(s)` : '';
+            
+            const content = `
+                <div class="popup-content">
+                    <strong>${campaign.name}</strong><br><br>
+                    Price: ₦${campaign.price?.toLocaleString()} per unit<br>
+                    Goal: ${campaign.goal} units<br>
+                    Reserved: ${campaign.reserved} units<br>
+                    Progress: ${Math.round((campaign.reserved / campaign.goal) * 100)}%<br>
+                    Status: ${campaign.status || 'active'}<br>${reservedText}
+                </div>
+            `;
+            
+            showPopup('Campaign Details', content, false);
         }
     });
 
-    // 6. POPUP CONFIRM (handles deposit & join)
-    popupConfirm?.addEventListener('click', async () => {
-        if (popupTitle.innerText.includes('Deposit')) {
-            const amount = parseFloat(popupAmount.value) || 0;
-            if (amount <= 0) return alert('Enter valid amount');
-            alert(`✅ Deposited ₦${amount} successfully!`);
-        } else if (popupTitle.innerText.includes('Join')) {
-            const units = parseInt(popupAmount.value) || 1;
-            alert(`✅ Joined campaign with ${units} unit(s)!`);
-        }
-        popupOverlay.classList.remove('show');
-    });
-
-    popupCancel?.addEventListener('click', () => popupOverlay.classList.remove('show'));
-    popupOverlay?.addEventListener('click', (e) => { 
-        if (e.target === popupOverlay) popupOverlay.classList.remove('show'); 
-    });
-
-    // 7. FAQ EXPAND/COLLAPSE
-    document.querySelectorAll('.faq-item').forEach(item => {
-        item.addEventListener('click', () => {
-            item.classList.toggle('open');
-            const answer = item.nextElementSibling;
-            if (answer?.classList.contains('faq-answer')) {
-                answer.style.maxHeight = item.classList.contains('open') ? answer.scrollHeight + 'px' : null;
+    // ----- FAQ ACCORDION -----
+    document.querySelectorAll('.faq-item').forEach((item) => {
+        item.addEventListener('click', function(e) {
+            e.preventDefault();
+            
+            document.querySelectorAll('.faq-item').forEach(otherItem => {
+                if (otherItem !== this && otherItem.classList.contains('open')) {
+                    otherItem.classList.remove('open');
+                    const otherAnswer = otherItem.nextElementSibling;
+                    if (otherAnswer && otherAnswer.classList.contains('faq-answer')) {
+                        otherAnswer.style.maxHeight = null;
+                    }
+                }
+            });
+            
+            this.classList.toggle('open');
+            const answer = this.nextElementSibling;
+            if (answer && answer.classList.contains('faq-answer')) {
+                if (this.classList.contains('open')) {
+                    answer.style.maxHeight = answer.scrollHeight + 'px';
+                } else {
+                    answer.style.maxHeight = null;
+                }
             }
         });
     });
 
-    // 8. NAVIGATION - labels light up when clicked
+    // ----- NAVIGATION HIGHLIGHTING & REDIRECT -----
     function setActiveNav(navId) {
         document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
             el.classList.remove('active');
-            if (el.dataset.nav === navId) el.classList.add('active');
+        });
+        
+        document.querySelectorAll(`[data-nav="${navId}"]`).forEach(el => {
+            el.classList.add('active');
         });
     }
 
     document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', () => {
+        el.addEventListener('click', (e) => {
+            e.preventDefault();
             const nav = el.dataset.nav;
             setActiveNav(nav);
             
-            // Show navigation popup
-            popupTitle.innerText = `Navigation: ${nav.charAt(0).toUpperCase() + nav.slice(1)}`;
-            popupAmount.style.display = 'none';
-            popupConfirm.style.display = 'none';
-            popupCancel.innerText = 'Close';
-            popupOverlay.classList.add('show');
+            // Navigate to corresponding HTML page
+            switch(nav) {
+                case 'dashboard':
+                    window.location.href = '/dashboard.html';
+                    break;
+                case 'orders':
+                    window.location.href = '/orders.html';
+                    break;
+                case 'wallet':
+                    window.location.href = '/wallet.html';
+                    break;
+                case 'track':
+                    window.location.href = '/track.html';
+                    break;
+            }
         });
     });
 
-    // 9. LOGOUT
+    // Set dashboard as active on page load
+    setActiveNav('dashboard');
+
+    // ----- LOGOUT -----
     logoutBtn?.addEventListener('click', () => {
-        signOut(auth).then(() => window.location.href = 'login.html');
+        signOut(auth).then(() => {
+            window.location.href = '/login.html';
+        }).catch((error) => {
+            console.error('Logout error:', error);
+        });
     });
 
-    // 10. ANY OTHER BUTTON (safety net)
-    document.addEventListener('click', (e) => {
-        const button = e.target.closest('button:not(.deposit-btn):not(.deposit-large):not(.view-campaign-btn):not(.campaign-action-btn):not(#viewAllOrders):not(#quickDeposit):not(#viewHistory)');
-        if (button && !e.target.closest('.wallet-pill') && !e.target.closest('[data-nav]')) {
-            popupTitle.innerText = 'Action';
-            popupAmount.style.display = 'none';
-            popupConfirm.style.display = 'none';
-            popupCancel.innerText = 'Close';
-            popupOverlay.classList.add('show');
+    // Close popup when clicking overlay
+    popupOverlay?.addEventListener('click', (e) => {
+        if (e.target === popupOverlay) {
+            popupOverlay.classList.remove('show');
         }
     });
 </script>
