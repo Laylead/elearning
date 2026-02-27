@@ -90,6 +90,7 @@
             transition: all 0.25s cubic-bezier(0.2,0.9,0.4,1);
             font-weight: 500;
             cursor: pointer;
+            text-decoration: none;
         }
         .nav-item .material-icons { font-size: 24px; color: rgba(255,255,255,0.8); }
         .nav-item.active {
@@ -277,7 +278,7 @@
         }
         .btn-primary:hover { background: white; transform: translateY(-2px); }
         .btn-success {
-            background: #1f8a4a; color: white; padding: 8px 22px; border-radius: 60px;
+            background: #1d8a4a; color: white; padding: 8px 22px; border-radius: 60px;
             font-weight: 600; cursor: pointer; transition: 0.2s; border: none;
         }
         .btn-success:hover { background: #0f632b; transform: translateY(-2px); }
@@ -339,7 +340,7 @@
         .popup-overlay.show { opacity: 1; visibility: visible; }
         .popup-card {
             background: rgba(255,255,255,0.95); backdrop-filter: blur(40px);
-            border-radius: 48px; padding: 32px; max-width: 450px; width: 90%;
+            border-radius: 48px; padding: 32px; max-width: 400px; width: 90%;
             box-shadow: 0 50px 80px -20px #0b2d4a, 0 0 0 1px rgba(255,255,255,0.9);
             transform: scale(0.8); transition: transform 0.4s cubic-bezier(0.2,0.9,0.3,1.3);
         }
@@ -348,6 +349,7 @@
         .popup-input {
             width: 100%; padding: 18px 22px; border-radius: 60px; border: 1px solid #cde0ee;
             font-size: 1.2rem; margin-bottom: 20px; background: white;
+            display: block;
         }
         .popup-content {
             margin-bottom: 24px;
@@ -355,13 +357,12 @@
             color: #1f4a6b;
             font-size: 1.1rem;
         }
-        .popup-actions { display: flex; gap: 16px; justify-content: flex-end; margin-top: 20px; }
+        .popup-actions { display: flex; gap: 16px; justify-content: flex-end; }
         .popup-btn {
             padding: 14px 28px; border-radius: 60px; font-weight: 600; border: none; cursor: pointer;
         }
         .popup-btn-primary { background: #1d8a4a; color: white; }
         .popup-btn-outline { background: transparent; border: 1px solid #306f9e; color: #1e5780; }
-        .popup-btn-danger { background: #dc3545; color: white; }
 
         /* mini dropdown (wallet popup) */
         .dropdown-menu {
@@ -404,6 +405,7 @@
             transition: 0.2s;
             flex: 1;
             border-radius: 30px;
+            text-decoration: none;
         }
         .mobile-nav-item .material-icons { font-size: 26px; }
         .mobile-nav-item.active {
@@ -413,16 +415,6 @@
             font-weight: 600;
         }
         .mobile-nav-item.active .material-icons { color: #1d5d8e; }
-
-        /* transaction items */
-        .transaction-item {
-            padding: 12px 0;
-            border-bottom: 1px solid rgba(0,0,0,0.05);
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-        .green-check { color: #1f8a4a; }
 
         @media (max-width: 1000px) {
             .campaign-row { grid-template-columns: 1fr; }
@@ -445,10 +437,10 @@
             <span class="logo-text">CrowdShop</span>
         </div>
         <div class="nav-links" id="sidebarNav">
-            <div class="nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span> Dashboard</div>
-            <div class="nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span> My Orders</div>
-            <div class="nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</div>
-            <div class="nav-item" data-nav="track"><span class="material-icons">local_shipping</span> Track Orders</div>
+            <a href="dashboard.html" class="nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span> Dashboard</a>
+            <a href="orders.html" class="nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span> My Orders</a>
+            <a href="wallet.html" class="nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span> Wallet</a>
+            <a href="track.html" class="nav-item" data-nav="track"><span class="material-icons">local_shipping</span> Track Orders</a>
         </div>
         <div class="user-profile-bottom">
             <div class="avatar" id="userAvatar">JD</div>
@@ -520,10 +512,10 @@
 
         <!-- MOBILE BOTTOM NAV WITH LABELS -->
         <div class="mobile-bottom-nav" id="mobileNav">
-            <div class="mobile-nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span><span>Home</span></div>
-            <div class="mobile-nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></div>
-            <div class="mobile-nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></div>
-            <div class="mobile-nav-item" data-nav="track"><span class="material-icons">local_shipping</span><span>Track</span></div>
+            <a href="dashboard.html" class="mobile-nav-item active" data-nav="dashboard"><span class="material-icons">dashboard</span><span>Home</span></a>
+            <a href="orders.html" class="mobile-nav-item" data-nav="orders"><span class="material-icons">shopping_bag</span><span>Orders</span></a>
+            <a href="wallet.html" class="mobile-nav-item" data-nav="wallet"><span class="material-icons">account_balance_wallet</span><span>Wallet</span></a>
+            <a href="track.html" class="mobile-nav-item" data-nav="track"><span class="material-icons">local_shipping</span><span>Track</span></a>
         </div>
     </main>
 </div>
@@ -532,8 +524,10 @@
 <div class="popup-overlay" id="popupOverlay">
     <div class="popup-card" id="popupCard">
         <div class="popup-title" id="popupTitle">Title</div>
-        <div id="popupContentArea"></div>
-        <div class="popup-actions" id="popupActions">
+        <div id="popupContentArea">
+            <input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">
+        </div>
+        <div class="popup-actions">
             <button class="popup-btn popup-btn-outline" id="popupCancel">Cancel</button>
             <button class="popup-btn popup-btn-primary" id="popupConfirm">Confirm</button>
         </div>
@@ -542,9 +536,24 @@
 
 <script type="module">
     // ========== EXTERNAL FIREBASE CONFIG ==========
-    import { auth, db } from './firebase-config.js';
-    import { onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
-    import { collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, serverTimestamp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+    import { initializeApp } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js';
+    import { getAuth, onAuthStateChanged, signOut } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-auth.js';
+    import { getFirestore, collection, onSnapshot, doc, query, where, getDocs, addDoc, updateDoc, increment, runTransaction } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
+
+    // Firebase configuration
+    const firebaseConfig = {
+        apiKey: "YOUR_API_KEY",
+        authDomain: "YOUR_AUTH_DOMAIN",
+        projectId: "YOUR_PROJECT_ID",
+        storageBucket: "YOUR_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
+        appId: "YOUR_APP_ID"
+    };
+
+    // Initialize Firebase
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
 
     // ----- ELEMENTS -----
     const walletDisplay = document.getElementById('walletDisplay');
@@ -564,26 +573,24 @@
     const walletDropdown = document.getElementById('walletDropdown');
     const popupOverlay = document.getElementById('popupOverlay');
     const popupTitle = document.getElementById('popupTitle');
+    const popupAmount = document.getElementById('popupAmount');
     const popupConfirm = document.getElementById('popupConfirm');
     const popupCancel = document.getElementById('popupCancel');
     const popupContentArea = document.getElementById('popupContentArea');
-    const popupActions = document.getElementById('popupActions');
     const viewAllOrders = document.getElementById('viewAllOrders');
     const depositTopBtn = document.getElementById('depositTopBtn');
     const depositLargeBtn = document.getElementById('depositLargeBtn');
     const quickDeposit = document.getElementById('quickDeposit');
     const viewHistory = document.getElementById('viewHistory');
 
-    // State
     let currentUser = null;
-    let currentBalance = 42000;
-    let campaigns = [];
-    let reservations = [];
+    let currentCampaignId = null;
+    let selectedUnits = 1;
 
     // ----- AUTH GUARD -----
     onAuthStateChanged(auth, async (user) => {
         if (!user) { 
-            window.location.href = '/login.html'; 
+            window.location.href = 'login.html'; 
             return; 
         }
 
@@ -595,35 +602,44 @@
         sidebarUserName.innerText = displayName;
         avatarDiv.innerText = (displayName.charAt(0) || 'U').toUpperCase();
 
-        // ----- WALLET LISTENER -----
+        // Set active nav based on current page
+        const currentPage = window.location.pathname.split('/').pop() || 'dashboard.html';
+        document.querySelectorAll('[data-nav]').forEach(el => {
+            if (el.getAttribute('href') === currentPage) {
+                el.classList.add('active');
+            } else {
+                el.classList.remove('active');
+            }
+        });
+
+        // ----- WALLET LISTENER WITH REAL-TIME UPDATES -----
         const userRef = doc(db, 'users', user.uid);
         onSnapshot(userRef, (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
-                currentBalance = data.walletBalance ?? 42000;
-                const formatted = `₦${currentBalance.toLocaleString()}`;
+                const balance = data.walletBalance || 42000;
+                const formatted = `₦${balance.toLocaleString()}`;
                 walletDisplay.innerHTML = `<span class="material-icons">account_balance_wallet</span> ${formatted}`;
                 walletLarge.innerText = formatted;
                 statWalletVal.innerText = formatted;
             } else {
                 // Create user document if it doesn't exist
                 updateDoc(userRef, { walletBalance: 42000, email: user.email }).catch(() => {
-                    // If document doesn't exist, set it
-                    import { setDoc } from 'https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js';
-                    setDoc(userRef, { walletBalance: 42000, email: user.email, createdAt: serverTimestamp() });
+                    // If document doesn't exist, create it
+                    import('https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore.js').then(({ setDoc }) => {
+                        setDoc(userRef, { walletBalance: 42000, email: user.email, createdAt: new Date() });
+                    });
                 });
             }
         });
 
-        // ----- RESERVATIONS (orders) -----
+        // ----- RESERVATIONS WITH REAL-TIME UPDATES -----
         const reservationsQuery = query(collection(db, 'reservations'), where('userId', '==', user.uid));
         onSnapshot(reservationsQuery, (snap) => {
-            reservations = [];
             let totalUnits = 0;
             let ordersHtml = '';
             snap.forEach(d => {
-                const r = { id: d.id, ...d.data() };
-                reservations.push(r);
+                const r = d.data();
                 totalUnits += r.units || 0;
                 const statusClass = r.status === 'in_transit' ? 'status-green' : 'status-yellow';
                 const icon = r.status === 'in_transit' ? 'local_shipping' : 'hourglass_empty';
@@ -634,128 +650,125 @@
             });
             ordersBody.innerHTML = ordersHtml || '<tr><td colspan="5" style="text-align:center;">No reserved slots</td></tr>';
             statUnits.innerText = totalUnits;
-            
-            // Update joined campaigns count
-            const uniqueCampaigns = new Set(reservations.map(r => r.campaignId));
-            statJoined.innerText = uniqueCampaigns.size;
         });
 
-        // ----- CAMPAIGNS LISTENER -----
+        // ----- CAMPAIGNS WITH REAL-TIME UPDATES -----
         const campaignsQuery = collection(db, 'campaigns');
         onSnapshot(campaignsQuery, (snap) => {
-            campaigns = [];
             let campaignsHtml = '';
             snap.forEach(doc => {
-                const c = { id: doc.id, ...doc.data() };
-                campaigns.push(c);
+                const c = doc.data();
+                const campaignId = doc.id;
+                const fundingPercentage = Math.round((c.reserved / c.goal) * 100) || 0;
                 
-                // Check if user has reserved this campaign
-                const userReservation = reservations.find(r => r.campaignId === doc.id);
-                const reservedUnits = userReservation ? userReservation.units : 0;
-                
-                const statusBadge = c.status === 'active' ? 'badge-status' : 'badge-warning';
-                const icon = c.status === 'active' ? 'bookmark' : 'pending';
-                const statusText = c.status === 'active' ? 'Active' : 'Ending Soon';
-                const progressPercent = Math.min(100, Math.round((c.reserved / c.goal) * 100));
-                
-                campaignsHtml += `<div class="campaign-card" data-campaign-id="${doc.id}">
-                    <div class="campaign-img" style="background-image:url('${c.imageUrl || 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text='+c.name}')"></div>
-                    <div class="campaign-header"><span class="campaign-title">${c.name}</span><span class="units-badge">${c.reserved}/${c.goal}</span></div>
-                    <div class="price-tag">₦${c.price?.toLocaleString()} per unit</div>
-                    <div class="progress-container"><div class="progress-bar-bg"><div class="progress-fill" style="width:${progressPercent}%"></div></div><div class="funding-text"><span>${progressPercent}% Funded</span></div></div>
-                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px; align-items:center;">
-                        <span class="${statusBadge}"><span class="material-icons">${icon}</span> ${statusText}</span>
-                        ${reservedUnits > 0 ? 
-                            `<span class="badge-status"><span class="material-icons">check_circle</span> You have ${reservedUnits}</span>` : 
-                            `<button class="btn-success join-campaign" data-id="${doc.id}" data-price="${c.price}">Join Pool</button>`
-                        }
-                        <button class="btn-outline view-campaign" data-id="${doc.id}">Details</button>
+                campaignsHtml += `
+                <div class="campaign-card" data-campaign-id="${campaignId}">
+                    <div class="campaign-img" style="background-image:url('${c.imageUrl || 'https://via.placeholder.com/300x160/b0d0ea/2a5e8c?text=' + c.name}')"></div>
+                    <div class="campaign-header">
+                        <span class="campaign-title">${c.name}</span>
+                        <span class="units-badge">${c.reserved || 0}/${c.goal || 100}</span>
+                    </div>
+                    <div class="price-tag">₦${(c.price || 0).toLocaleString()} per unit</div>
+                    <div class="progress-container">
+                        <div class="progress-bar-bg">
+                            <div class="progress-fill" style="width:${fundingPercentage}%"></div>
+                        </div>
+                        <div class="funding-text"><span>${fundingPercentage}% Funded</span></div>
+                    </div>
+                    <div style="display:flex; gap:12px; flex-wrap:wrap; margin-top:16px;">
+                        <button class="btn-outline view-campaign" data-id="${campaignId}">View Details</button>
+                        <button class="btn-success buy-campaign" data-id="${campaignId}" data-price="${c.price || 0}" data-name="${c.name}">Buy Now</button>
                     </div>
                 </div>`;
             });
             campaignsContainer.innerHTML = campaignsHtml || '<p>No active campaigns</p>';
         });
 
-        // ----- TRANSACTIONS LISTENER -----
+        // ----- JOINED CAMPAIGNS COUNT -----
+        const reservationsSnap = await getDocs(query(collection(db, 'reservations'), where('userId', '==', user.uid)));
+        const uniqueCampaigns = new Set(reservationsSnap.docs.map(d => d.data().campaignId));
+        statJoined.innerText = uniqueCampaigns.size;
+
+        // ----- TRANSACTIONS WITH REAL-TIME UPDATES -----
         const txQuery = query(collection(db, 'transactions'), where('userId', '==', user.uid));
         onSnapshot(txQuery, (snap) => {
             let txHtml = '';
             snap.forEach(d => {
                 const t = d.data();
-                txHtml += `<div class="transaction-item"><span class="material-icons green-check">check_circle</span> <span>₦${t.amount?.toLocaleString()} - ${t.description || t.type || 'Transaction'}</span></div>`;
+                txHtml += `<div class="transaction-item" style="display:flex; align-items:center; gap:12px; padding:8px 0;">
+                    <span class="material-icons" style="color:#1d8a4a;">check_circle</span> 
+                    <span>₦${(t.amount || 0).toLocaleString()} - ${t.description || t.type || 'Transaction'}</span>
+                </div>`;
             });
             transactionsDiv.innerHTML = txHtml || '<div class="transaction-item">No recent transactions</div>';
         });
     });
 
     // ----- POPUP FUNCTIONS -----
-    function showPopup(title, content, showActions = true, confirmText = 'Confirm', cancelText = 'Cancel', confirmHandler = null) {
+    function showPopup(title, content, showInput = false, confirmText = 'Confirm') {
         popupTitle.innerText = title;
-        popupContentArea.innerHTML = content;
         
-        if (showActions) {
-            popupActions.style.display = 'flex';
+        if (showInput) {
+            popupContentArea.innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
+            popupConfirm.style.display = 'inline-block';
             popupConfirm.innerText = confirmText;
-            popupCancel.innerText = cancelText;
-            
-            // Remove old handlers and add new one
-            const newConfirm = popupConfirm.cloneNode(true);
-            const newCancel = popupCancel.cloneNode(true);
-            popupConfirm.parentNode.replaceChild(newConfirm, popupConfirm);
-            popupCancel.parentNode.replaceChild(newCancel, popupCancel);
-            
-            newConfirm.addEventListener('click', async () => {
-                if (confirmHandler) {
-                    await confirmHandler();
-                }
-                popupOverlay.classList.remove('show');
-            });
-            
-            newCancel.addEventListener('click', () => {
-                popupOverlay.classList.remove('show');
-            });
         } else {
-            popupActions.style.display = 'none';
+            popupContentArea.innerHTML = `<div class="popup-content">${content.replace(/\n/g, '<br>')}</div>`;
+            popupConfirm.style.display = 'none';
         }
         
+        popupCancel.innerText = 'Close';
         popupOverlay.classList.add('show');
     }
 
     function showDepositPopup() {
-        const content = `
-            <input type="number" id="depositAmount" class="popup-input" placeholder="Amount (₦)" value="5000" min="1000">
-            <p style="color:#666; margin-top:8px;">Minimum deposit: ₦1,000</p>
+        popupTitle.innerText = 'Deposit Funds';
+        popupContentArea.innerHTML = '<input type="number" id="popupAmount" class="popup-input" placeholder="Amount (₦)" value="5000">';
+        popupConfirm.style.display = 'inline-block';
+        popupConfirm.innerText = 'Deposit';
+        popupCancel.innerText = 'Cancel';
+        popupOverlay.classList.add('show');
+    }
+
+    function showBuyPopup(campaignId, campaignName, price) {
+        currentCampaignId = campaignId;
+        popupTitle.innerText = `Buy ${campaignName}`;
+        popupContentArea.innerHTML = `
+            <div class="popup-content">
+                <p>Price per unit: ₦${price.toLocaleString()}</p>
+                <p>Your balance: <span id="currentBalance">₦0</span></p>
+                <label>Number of units:</label>
+                <input type="number" id="buyUnits" class="popup-input" min="1" max="10" value="1">
+                <p>Total: ₦<span id="totalPrice">${price.toLocaleString()}</span></p>
+            </div>
         `;
         
-        showPopup('Deposit Funds', content, true, 'Deposit', 'Cancel', async () => {
-            const amount = parseFloat(document.getElementById('depositAmount').value);
-            if (isNaN(amount) || amount < 1000) {
-                alert('Please enter a valid amount (minimum ₦1,000)');
-                return;
-            }
+        // Update total price when units change
+        setTimeout(() => {
+            const buyUnits = document.getElementById('buyUnits');
+            const totalSpan = document.getElementById('totalPrice');
+            const balanceSpan = document.getElementById('currentBalance');
             
-            if (!currentUser) return;
-            
-            try {
+            // Get current balance
+            if (currentUser) {
                 const userRef = doc(db, 'users', currentUser.uid);
-                await updateDoc(userRef, {
-                    walletBalance: increment(amount)
+                getDocs(userRef).then(docSnap => {
+                    if (docSnap.exists()) {
+                        balanceSpan.innerText = `₦${docSnap.data().walletBalance?.toLocaleString() || 0}`;
+                    }
                 });
-                
-                await addDoc(collection(db, 'transactions'), {
-                    userId: currentUser.uid,
-                    amount: amount,
-                    type: 'deposit',
-                    description: 'Wallet deposit',
-                    timestamp: serverTimestamp()
-                });
-                
-                showPopup('Success', `<div class="popup-content">✅ Successfully deposited ₦${amount.toLocaleString()}</div>`, false);
-            } catch (error) {
-                console.error('Deposit error:', error);
-                alert('Error processing deposit');
             }
-        });
+            
+            buyUnits.addEventListener('input', () => {
+                const units = parseInt(buyUnits.value) || 1;
+                totalSpan.innerText = (units * price).toLocaleString();
+            });
+        }, 100);
+        
+        popupConfirm.style.display = 'inline-block';
+        popupConfirm.innerText = 'Purchase';
+        popupCancel.innerText = 'Cancel';
+        popupOverlay.classList.add('show');
     }
 
     // ----- WALLET DROPDOWN -----
@@ -792,23 +805,15 @@
     // ----- VIEW HISTORY -----
     viewHistory?.addEventListener('click', () => {
         walletDropdown.classList.remove('show');
-        showPopup('Transaction History', '<div class="popup-content">Loading transactions...</div>', false);
-        
-        // Load transactions
         if (currentUser) {
             const txQuery = query(collection(db, 'transactions'), where('userId', '==', currentUser.uid));
             getDocs(txQuery).then(snap => {
-                let content = '<div class="popup-content">';
-                if (snap.empty) {
-                    content += 'No transactions found';
-                } else {
-                    snap.forEach(doc => {
-                        const t = doc.data();
-                        content += `• ₦${t.amount?.toLocaleString()} - ${t.description || t.type}<br>`;
-                    });
-                }
-                content += '</div>';
-                popupContentArea.innerHTML = content;
+                let history = 'Transaction History:\n';
+                snap.forEach(d => {
+                    const t = d.data();
+                    history += `• ₦${t.amount?.toLocaleString()} - ${t.description || t.type}\n`;
+                });
+                showPopup('Transaction History', history || 'No transactions yet', false);
             });
         }
     });
@@ -816,122 +821,148 @@
     // ----- VIEW ALL ORDERS -----
     viewAllOrders?.addEventListener('click', (e) => {
         e.preventDefault();
-        
-        if (reservations.length === 0) {
-            showPopup('My Orders', '<div class="popup-content">No orders found</div>', false);
-            return;
+        if (currentUser) {
+            const reservationsQuery = query(collection(db, 'reservations'), where('userId', '==', currentUser.uid));
+            getDocs(reservationsQuery).then(snap => {
+                let orders = 'All Orders:\n';
+                snap.forEach(d => {
+                    const r = d.data();
+                    orders += `• ${r.productName} - ${r.units} unit(s) - ₦${(r.price * r.units).toLocaleString()} - ${r.status}\n`;
+                });
+                showPopup('All Orders', orders || 'No orders yet', false);
+            });
         }
-        
-        let content = '<div class="popup-content">';
-        reservations.forEach(r => {
-            content += `• ${r.productName} - ${r.units} unit(s) - ₦${(r.price * r.units).toLocaleString()} - ${r.status}<br>`;
-        });
-        content += '</div>';
-        
-        showPopup('My Orders', content, false);
     });
 
-    // ----- JOIN CAMPAIGN -----
-    document.addEventListener('click', async (e) => {
-        if (e.target.closest('.join-campaign')) {
+    // ----- BUY CAMPAIGN -----
+    document.addEventListener('click', (e) => {
+        if (e.target.closest('.buy-campaign')) {
             e.preventDefault();
-            const btn = e.target.closest('.join-campaign');
+            const btn = e.target.closest('.buy-campaign');
             const campaignId = btn.dataset.id;
             const price = parseFloat(btn.dataset.price);
-            
-            const campaign = campaigns.find(c => c.id === campaignId);
-            if (!campaign) return;
-            
-            const content = `
-                <div class="popup-content">
-                    <p><strong>${campaign.name}</strong></p>
-                    <p>Price per unit: ₦${price.toLocaleString()}</p>
-                    <p>Available: ${campaign.goal - campaign.reserved} units</p>
-                    <p>Your balance: ₦${currentBalance.toLocaleString()}</p>
-                    <input type="number" id="joinUnits" class="popup-input" placeholder="Number of units" value="1" min="1" max="${campaign.goal - campaign.reserved}">
-                </div>
-            `;
-            
-            showPopup('Join Campaign', content, true, 'Join Now', 'Cancel', async () => {
-                const units = parseInt(document.getElementById('joinUnits').value);
-                if (isNaN(units) || units < 1 || units > (campaign.goal - campaign.reserved)) {
-                    alert('Invalid number of units');
-                    return;
-                }
-                
-                const totalCost = price * units;
-                
-                if (totalCost > currentBalance) {
-                    alert(`Insufficient balance. You need ₦${totalCost.toLocaleString()}`);
-                    return;
-                }
-                
-                if (!currentUser) return;
-                
-                try {
-                    // Update user wallet
-                    const userRef = doc(db, 'users', currentUser.uid);
-                    await updateDoc(userRef, {
-                        walletBalance: increment(-totalCost)
-                    });
-                    
-                    // Create reservation
-                    await addDoc(collection(db, 'reservations'), {
-                        userId: currentUser.uid,
-                        campaignId: campaignId,
-                        productName: campaign.name,
-                        price: price,
-                        units: units,
-                        status: 'funding',
-                        createdAt: serverTimestamp()
-                    });
-                    
-                    // Update campaign reserved count
-                    const campaignRef = doc(db, 'campaigns', campaignId);
-                    await updateDoc(campaignRef, {
-                        reserved: increment(units)
-                    });
-                    
-                    // Add transaction
-                    await addDoc(collection(db, 'transactions'), {
-                        userId: currentUser.uid,
-                        amount: totalCost,
-                        type: 'purchase',
-                        description: `Purchased ${units} unit(s) of ${campaign.name}`,
-                        timestamp: serverTimestamp()
-                    });
-                    
-                    showPopup('Success', `<div class="popup-content">✅ Successfully joined ${campaign.name} with ${units} unit(s) for ₦${totalCost.toLocaleString()}</div>`, false);
-                } catch (error) {
-                    console.error('Join campaign error:', error);
-                    alert('Error joining campaign');
-                }
-            });
+            const name = btn.dataset.name;
+            showBuyPopup(campaignId, name, price);
         }
         
         if (e.target.closest('.view-campaign')) {
             e.preventDefault();
-            const btn = e.target.closest('.view-campaign');
-            const campaignId = btn.dataset.id;
+            const id = e.target.closest('.view-campaign').dataset.id;
+            const campaignRef = doc(db, 'campaigns', id);
+            getDocs(campaignRef).then(docSnap => {
+                if (docSnap.exists()) {
+                    const c = docSnap.data();
+                    const details = `${c.name}\n• Goal: ${c.goal} units\n• Reserved: ${c.reserved || 0} units\n• Price: ₦${c.price?.toLocaleString()}\n• Description: ${c.description || 'No description'}`;
+                    showPopup('Campaign Details', details, false);
+                }
+            });
+        }
+    });
+
+    // ----- POPUP CONFIRM (Deposit or Purchase) -----
+    popupConfirm?.addEventListener('click', async () => {
+        if (!currentUser) return;
+        
+        if (popupTitle.innerText.includes('Deposit')) {
+            const amount = parseFloat(document.getElementById('popupAmount')?.value) || 0;
+            if (amount <= 0) {
+                alert('Enter valid amount');
+                return;
+            }
             
-            const campaign = campaigns.find(c => c.id === campaignId);
-            if (!campaign) return;
+            try {
+                const userRef = doc(db, 'users', currentUser.uid);
+                await updateDoc(userRef, {
+                    walletBalance: increment(amount)
+                });
+                
+                // Add transaction record
+                await addDoc(collection(db, 'transactions'), {
+                    userId: currentUser.uid,
+                    amount: amount,
+                    type: 'deposit',
+                    description: 'Deposit',
+                    timestamp: new Date()
+                });
+                
+                alert(`✅ Successfully deposited ₦${amount.toLocaleString()}`);
+                popupOverlay.classList.remove('show');
+            } catch (error) {
+                alert('Error processing deposit: ' + error.message);
+            }
+        } 
+        else if (popupTitle.innerText.includes('Buy') || popupTitle.innerText.includes('Purchase')) {
+            const units = parseInt(document.getElementById('buyUnits')?.value) || 1;
+            const price = parseFloat(document.querySelector('.buy-campaign')?.dataset.price) || 0;
+            const totalCost = units * price;
             
-            const userReservation = reservations.find(r => r.campaignId === campaignId);
-            const reservedText = userReservation ? `\nYou have reserved: ${userReservation.units} unit(s)` : '';
-            
-            const content = `
-                <div class="popup-content">
-                    <strong>${campaign.name}</strong><br><br>
-                    Price: ₦${campaign.price?.toLocaleString()} per unit<br>
-                    Goal: ${campaign.goal} units<br>
-                    Reserved: ${campaign.reserved} units<br>
-                    Progress: ${Math.round((campaign.reserved / campaign.goal) * 100)}%<br>
-                    Status: ${campaign.status || 'active'}<br>${reservedText}
-                </div>
-            `;
-            
-            showPopup('Campaign Details', content, false);
+            try {
+                const userRef = doc(db, 'users', currentUser.uid);
+                const campaignRef = doc(db, 'campaigns', currentCampaignId);
+                
+                // Run transaction to ensure atomic operation
+                await runTransaction(db, async (transaction) => {
+                    const userDoc = await transaction.get(userRef);
+                    const campaignDoc = await transaction.get(campaignRef);
+                    
+                    if (!userDoc.exists()) throw new Error('User not found');
+                    if (!campaignDoc.exists()) throw new Error('Campaign not found');
+                    
+                    const userBalance = userDoc.data().walletBalance || 0;
+                    if (userBalance < totalCost) {
+                        throw new Error('Insufficient balance');
+                    }
+                    
+                    // Update user balance
+                    transaction.update(userRef, {
+                        walletBalance: increment(-totalCost)
+                    });
+                    
+                    // Update campaign reserved units
+                    transaction.update(campaignRef, {
+                        reserved: increment(units)
+                    });
+                });
+                
+                // Create reservation
+                await addDoc(collection(db, 'reservations'), {
+                    userId: currentUser.uid,
+                    campaignId: currentCampaignId,
+                    productName: popupTitle.innerText.replace('Buy ', ''),
+                    price: price,
+                    units: units,
+                    status: 'funding',
+                    eta: '—',
+                    timestamp: new Date()
+                });
+                
+                // Add transaction record
+                await addDoc(collection(db, 'transactions'), {
+                    userId: currentUser.uid,
+                    amount: totalCost,
+                    type: 'purchase',
+                    description: `Purchased ${units} unit(s)`,
+                    timestamp: new Date()
+                });
+                
+                alert(`✅ Successfully purchased ${units} unit(s) for ₦${totalCost.toLocaleString()}`);
+                popupOverlay.classList.remove('show');
+            } catch (error) {
+                alert('Error processing purchase: ' + error.message);
+            }
+        } else {
+            alert('✅ Action completed successfully');
+            popupOverlay.classList.remove('show');
+        }
+    });
+
+    popupCancel?.addEventListener('click', () => {
+        popupOverlay.classList.remove('show');
+    });
+    
+    popupOverlay?.addEventListener('click', (e) => {
+        if (e.target === popupOverlay) {
+            popupOverlay.classList.remove('show');
         }
     });
 
@@ -939,81 +970,33 @@
     document.querySelectorAll('.faq-item').forEach((item) => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
-            
+            // Close other open FAQs
             document.querySelectorAll('.faq-item').forEach(otherItem => {
                 if (otherItem !== this && otherItem.classList.contains('open')) {
                     otherItem.classList.remove('open');
                     const otherAnswer = otherItem.nextElementSibling;
-                    if (otherAnswer && otherAnswer.classList.contains('faq-answer')) {
+                    if (otherAnswer?.classList.contains('faq-answer')) {
                         otherAnswer.style.maxHeight = null;
                     }
                 }
             });
             
+            // Toggle current
             this.classList.toggle('open');
             const answer = this.nextElementSibling;
-            if (answer && answer.classList.contains('faq-answer')) {
-                if (this.classList.contains('open')) {
-                    answer.style.maxHeight = answer.scrollHeight + 'px';
-                } else {
-                    answer.style.maxHeight = null;
-                }
+            if (answer?.classList.contains('faq-answer')) {
+                answer.style.maxHeight = this.classList.contains('open') ? answer.scrollHeight + 'px' : null;
             }
         });
     });
-
-    // ----- NAVIGATION HIGHLIGHTING & REDIRECT -----
-    function setActiveNav(navId) {
-        document.querySelectorAll('.nav-item, .mobile-nav-item').forEach(el => {
-            el.classList.remove('active');
-        });
-        
-        document.querySelectorAll(`[data-nav="${navId}"]`).forEach(el => {
-            el.classList.add('active');
-        });
-    }
-
-    document.querySelectorAll('[data-nav]').forEach(el => {
-        el.addEventListener('click', (e) => {
-            e.preventDefault();
-            const nav = el.dataset.nav;
-            setActiveNav(nav);
-            
-            // Navigate to corresponding HTML page
-            switch(nav) {
-                case 'dashboard':
-                    window.location.href = '/dashboard.html';
-                    break;
-                case 'orders':
-                    window.location.href = '/orders.html';
-                    break;
-                case 'wallet':
-                    window.location.href = '/wallet.html';
-                    break;
-                case 'track':
-                    window.location.href = '/track.html';
-                    break;
-            }
-        });
-    });
-
-    // Set dashboard as active on page load
-    setActiveNav('dashboard');
 
     // ----- LOGOUT -----
     logoutBtn?.addEventListener('click', () => {
         signOut(auth).then(() => {
-            window.location.href = '/login.html';
+            window.location.href = 'login.html';
         }).catch((error) => {
             console.error('Logout error:', error);
         });
-    });
-
-    // Close popup when clicking overlay
-    popupOverlay?.addEventListener('click', (e) => {
-        if (e.target === popupOverlay) {
-            popupOverlay.classList.remove('show');
-        }
     });
 </script>
 </body>
