@@ -1,1243 +1,1118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
-  <title>StudyHub · Dashboard</title>
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-    }
-
-    body {
-      background: #f5f7fb;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 16px;
-    }
-
-    .dashboard {
-      max-width: 1440px;
-      width: 100%;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-      position: relative;
-    }
-
-    /* ===== SIDEBAR ===== */
-    .sidebar {
-      background: white;
-      border-radius: 32px;
-      padding: 24px 16px;
-      box-shadow: 0 20px 40px rgba(99, 102, 241, 0.15);
-      display: flex;
-      flex-direction: column;
-      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-      height: fit-content;
-      position: relative;
-      z-index: 20;
-    }
-
-    @media (max-width: 767px) {
-      .sidebar {
-        position: fixed;
-        top: 16px;
-        left: 16px;
-        right: 16px;
-        width: auto;
-        max-width: 320px;
-        transform: translateX(-120%);
-        opacity: 0;
-        pointer-events: none;
-        transition: transform 0.3s ease, opacity 0.2s;
-        max-height: calc(100vh - 32px);
-        overflow-y: auto;
-        z-index: 100;
-      }
-      .sidebar.open {
-        transform: translateX(0);
-        opacity: 1;
-        pointer-events: all;
-      }
-      .menu-overlay {
-        position: fixed;
-        top: 0; left: 0; right: 0; bottom: 0;
-        background: rgba(0,0,0,0.3);
-        backdrop-filter: blur(4px);
-        z-index: 99;
-        opacity: 0;
-        pointer-events: none;
-        transition: opacity 0.2s;
-      }
-      .menu-overlay.active {
-        opacity: 1;
-        pointer-events: all;
-      }
-    }
-
-    @media (min-width: 768px) {
-      .dashboard {
-        grid-template-columns: 280px 1fr;
-      }
-      .sidebar {
-        transform: none !important;
-        opacity: 1 !important;
-        pointer-events: all !important;
-        position: relative;
-      }
-      .menu-toggle, .menu-overlay { display: none; }
-    }
-
-    .menu-toggle {
-      background: #6366f1;
-      color: white;
-      width: 48px;
-      height: 48px;
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-size: 1.6rem;
-      position: fixed;
-      bottom: 20px;
-      right: 20px;
-      z-index: 101;
-      box-shadow: 0 10px 25px #6366f1;
-      cursor: pointer;
-      border: none;
-    }
-
-    .logo {
-      font-size: 28px;
-      font-weight: 700;
-      margin-bottom: 28px;
-      padding-left: 8px;
-    }
-    .logo span {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .nav-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 16px;
-      margin: 6px 0;
-      border-radius: 20px;
-      color: #475569;
-      font-weight: 500;
-      transition: all 0.2s;
-      cursor: pointer;
-    }
-    .nav-item i { width: 24px; color: #94a3b8; }
-    .nav-item.active {
-      background: #6366f1;
-      color: white;
-      box-shadow: 0 10px 20px -7px #6366f1;
-    }
-    .nav-item.active i { color: white; }
-    .nav-item:hover:not(.active) { background: #f1f5f9; transform: translateX(5px); }
-
-    .upgrade-card {
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border-radius: 28px;
-      padding: 22px 16px;
-      margin: 24px 0 16px;
-      color: white;
-      transition: transform 0.2s;
-      cursor: pointer;
-    }
-
-    .logout-item {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      padding: 14px 16px;
-      color: #ef4444;
-      border-top: 1px solid #eef2f6;
-      cursor: pointer;
-      border-radius: 18px;
-    }
-    .logout-item:hover { background: #fee2e2; }
-
-    /* ===== MAIN CONTENT ===== */
-    .main {
-      display: flex;
-      flex-direction: column;
-      gap: 24px;
-      width: 100%;
-    }
-
-    .welcome-header {
-      background: white;
-      border-radius: 32px;
-      padding: 28px 24px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 20px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.04);
-    }
-
-    .user-avatar {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      color: white;
-      font-size: 24px;
-      font-weight: 600;
-    }
-
-    .create-room-btn {
-      background: #6366f1;
-      color: white;
-      padding: 16px 30px;
-      border-radius: 60px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      box-shadow: 0 16px 28px -8px #6366f1;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .create-room-btn:hover { transform: scale(1.02); }
-
-    .two-column, .bottom-row {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 24px;
-    }
-    @media (min-width: 768px) {
-      .two-column { grid-template-columns: 1.6fr 1fr; }
-      .bottom-row { grid-template-columns: 1fr 1fr; }
-    }
-
-    .card {
-      background: white;
-      border-radius: 32px;
-      padding: 26px 22px;
-      box-shadow: 0 12px 30px rgba(0,0,0,0.02);
-    }
-
-    .card-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-
-    .live-badge {
-      background: #fee2e2;
-      color: #ef4444;
-      padding: 6px 14px;
-      border-radius: 40px;
-      font-size: 13px;
-      font-weight: 600;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* Rooms Grid */
-    .rooms-grid {
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 16px;
-    }
-    @media (min-width: 500px) { .rooms-grid { grid-template-columns: repeat(2,1fr); } }
-
-    .room-card {
-      background: #f8fafd;
-      border-radius: 24px;
-      padding: 20px;
-      border: 1px solid #edf2f7;
-      transition: 0.2s;
-      cursor: pointer;
-    }
-    .room-card:hover {
-      border-color: #6366f1;
-      transform: translateY(-4px);
-    }
-
-    .room-meta { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
-    .student-count { background: #e0e7ff; color: #6366f1; padding: 4px 12px; border-radius: 30px; }
-    .live-tag { background: #10b981; color: white; padding: 4px 12px; border-radius: 30px; }
-    .join-tag { background: #6366f1; color: white; padding: 4px 16px; border-radius: 30px; }
-
-    /* Sessions */
-    .sessions-list { display: flex; flex-direction: column; gap: 12px; }
-    .session-item {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 16px;
-      background: #f8fafd;
-      border-radius: 20px;
-      border: 1px solid #edf2f7;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .session-item:hover { background: #e0e7ff; transform: translateX(5px); }
-    .session-join {
-      background: #6366f1;
-      color: white;
-      padding: 8px 22px;
-      border-radius: 40px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .session-join:hover { background: #4f52e0; }
-
-    .add-session {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      color: #6366f1;
-      font-weight: 600;
-      margin-top: 20px;
-      cursor: pointer;
-      padding: 12px;
-      border-radius: 16px;
-      transition: 0.2s;
-    }
-    .add-session:hover { background: #f0f4ff; }
-
-    /* Progress Chart */
-    .chart-container {
-      display: flex;
-      align-items: flex-end;
-      justify-content: space-between;
-      height: 180px;
-      margin-top: 20px;
-      gap: 8px;
-    }
-    .chart-bar {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      width: 100%;
-      cursor: pointer;
-    }
-    .bar {
-      width: 100%;
-      height: 140px;
-      background: #edf2f7;
-      border-radius: 30px;
-      position: relative;
-      overflow: hidden;
-    }
-    .fill {
-      position: absolute;
-      bottom: 0;
-      width: 100%;
-      background: #6366f1;
-      border-radius: 30px;
-      transition: height 0.6s;
-    }
-    .day { color: #64748b; font-size: 12px; margin-top: 8px; }
-
-    /* Courses */
-    .courses-list { display: flex; flex-direction: column; gap: 12px; }
-    .course-item {
-      background: #f8fafd;
-      border-radius: 20px;
-      padding: 16px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid #edf2f7;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .course-item:hover { background: #e0e7ff; transform: translateX(6px); }
-
-    /* Modal */
-    .modal-overlay {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0,0,0,0.5);
-      backdrop-filter: blur(5px);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 0.3s;
-    }
-    .modal-overlay.show {
-      opacity: 1;
-      pointer-events: all;
-    }
-    .modal-content {
-      background: white;
-      border-radius: 32px;
-      padding: 32px;
-      max-width: 450px;
-      width: 90%;
-      transform: scale(0.9) translateY(20px);
-      transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    }
-    .modal-overlay.show .modal-content {
-      transform: scale(1) translateY(0);
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20px;
-    }
-    .modal-close {
-      background: none;
-      border: none;
-      font-size: 24px;
-      cursor: pointer;
-      color: #94a3b8;
-    }
-    .modal-body { margin-bottom: 24px; }
-    .modal-footer {
-      display: flex;
-      gap: 12px;
-      justify-content: flex-end;
-    }
-    .modal-btn {
-      padding: 12px 24px;
-      border: none;
-      border-radius: 16px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: 0.2s;
-    }
-    .modal-btn-primary {
-      background: #6366f1;
-      color: white;
-    }
-    .modal-btn-primary:hover { background: #4f52e0; }
-    .modal-btn-secondary {
-      background: #f1f4f9;
-      color: #475569;
-    }
-    .modal-btn-secondary:hover { background: #e2e8f0; }
-
-    /* Add Session Form */
-    .form-group { margin-bottom: 20px; }
-    .form-group label {
-      display: block;
-      margin-bottom: 8px;
-      font-weight: 500;
-      color: #475569;
-    }
-    .form-group input,
-    .form-group select,
-    .form-group textarea {
-      width: 100%;
-      padding: 14px 16px;
-      border: 2px solid #e2e8f0;
-      border-radius: 16px;
-      font-size: 15px;
-      transition: 0.2s;
-    }
-    .form-group input:focus,
-    .form-group select:focus,
-    .form-group textarea:focus {
-      outline: none;
-      border-color: #6366f1;
-    }
-
-    /* Toast Notification */
-    .toast {
-      position: fixed;
-      bottom: 30px;
-      right: 30px;
-      background: white;
-      border-radius: 16px;
-      padding: 16px 24px;
-      box-shadow: 0 20px 40px rgba(0,0,0,0.2);
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transform: translateX(400px);
-      transition: transform 0.3s;
-      z-index: 1100;
-    }
-    .toast.show { transform: translateX(0); }
-    .toast.success { border-left: 4px solid #10b981; }
-    .toast.error { border-left: 4px solid #ef4444; }
-
-    .loader {
-      border: 4px solid #f3f3f3;
-      border-top: 4px solid #6366f1;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      animation: spin 1s linear infinite;
-      margin: 20px auto;
-    }
-    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>StudyHub · Whiteboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.15.0/dist/AgoraRTC_N-4.15.0.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
+        
+        body { 
+            background: #1a1c2c; 
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .app-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            height: 100vh;
+            background: #f5f7fb;
+        }
+        
+        /* Sidebar */
+        .tools-sidebar {
+            background: white;
+            border-right: 2px solid #eef2f6;
+            padding: 20px;
+            overflow-y: auto;
+        }
+        
+        .room-info {
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid #eef2f6;
+        }
+        
+        .room-title {
+            font-size: 20px;
+            font-weight: 700;
+            color: #1e293b;
+            margin-bottom: 5px;
+        }
+        
+        .room-course {
+            background: #e0e7ff;
+            color: #6366f1;
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+        
+        .tool-section {
+            margin-bottom: 25px;
+        }
+        
+        .tool-section h4 {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .tool-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+        }
+        
+        .tool-btn {
+            background: #f8fafd;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 12px 8px;
+            cursor: pointer;
+            transition: 0.2s;
+            text-align: center;
+            color: #475569;
+        }
+        
+        .tool-btn:hover {
+            background: #e0e7ff;
+            border-color: #6366f1;
+            color: #6366f1;
+        }
+        
+        .tool-btn.active {
+            background: #6366f1;
+            border-color: #6366f1;
+            color: white;
+        }
+        
+        .tool-btn i { font-size: 20px; }
+        
+        .color-picker {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            margin-top: 10px;
+        }
+        
+        .color-option {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: 0.2s;
+        }
+        
+        .color-option:hover { transform: scale(1.1); }
+        .color-option.selected { border-color: #1e293b; }
+        
+        .math-symbols {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 8px;
+        }
+        
+        .math-btn {
+            background: #f8fafd;
+            border: 1px solid #edf2f7;
+            border-radius: 12px;
+            padding: 10px;
+            font-size: 20px;
+            font-weight: 600;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .math-btn:hover { background: #6366f1; color: white; }
+        
+        /* Main Whiteboard */
+        .whiteboard-area {
+            background: #f5f7fb;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        #whiteboard {
+            width: 100%;
+            height: 100%;
+            cursor: crosshair;
+            background: white;
+        }
+        
+        .whiteboard-header {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            pointer-events: none;
+        }
+        
+        .participants-bar {
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(10px);
+            border-radius: 40px;
+            padding: 10px 20px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            pointer-events: all;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        }
+        
+        .participant-avatars {
+            display: flex;
+            align-items: center;
+        }
+        
+        .participant-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background: #6366f1;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            margin-right: -8px;
+            border: 2px solid white;
+        }
+        
+        .live-audio-indicator {
+            background: #ef4444;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 30px;
+            font-size: 12px;
+            font-weight: 600;
+            animation: pulse 1.5s infinite;
+        }
+        
+        /* Chat Sidebar */
+        .chat-sidebar {
+            background: white;
+            border-left: 2px solid #eef2f6;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .chat-header {
+            padding: 20px;
+            border-bottom: 2px solid #eef2f6;
+        }
+        
+        .chat-header h3 {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            color: #1e293b;
+        }
+        
+        .audio-controls {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+        }
+        
+        .audio-btn {
+            flex: 1;
+            background: #f8fafd;
+            border: 1px solid #edf2f7;
+            border-radius: 30px;
+            padding: 10px;
+            cursor: pointer;
+            text-align: center;
+        }
+        
+        .audio-btn.active {
+            background: #6366f1;
+            color: white;
+            border-color: #6366f1;
+        }
+        
+        .audio-btn.speaking {
+            animation: speaking 0.5s ease-in-out infinite;
+        }
+        
+        @keyframes speaking {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); background: #10b981; }
+        }
+        
+        .chat-messages {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        
+        .message {
+            background: #f8fafd;
+            border-radius: 16px;
+            padding: 12px;
+        }
+        
+        .message.own {
+            background: #6366f1;
+            color: white;
+            margin-left: auto;
+        }
+        
+        .message-sender {
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 4px;
+            color: #64748b;
+        }
+        
+        .message.own .message-sender { color: rgba(255,255,255,0.8); }
+        
+        .message-text { font-size: 14px; }
+        
+        .chat-input-area {
+            padding: 20px;
+            border-top: 2px solid #eef2f6;
+            display: flex;
+            gap: 10px;
+        }
+        
+        .chat-input {
+            flex: 1;
+            padding: 12px 16px;
+            border: 2px solid #eef2f6;
+            border-radius: 30px;
+            outline: none;
+        }
+        
+        .chat-input:focus { border-color: #6366f1; }
+        
+        .send-btn {
+            background: #6366f1;
+            color: white;
+            border: none;
+            width: 46px;
+            height: 46px;
+            border-radius: 50%;
+            cursor: pointer;
+        }
+        
+        /* Screenshot Modal */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(5px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 2000;
+            opacity: 0;
+            pointer-events: none;
+            transition: 0.3s;
+        }
+        
+        .modal-overlay.show {
+            opacity: 1;
+            pointer-events: all;
+        }
+        
+        .modal-content {
+            background: white;
+            border-radius: 32px;
+            padding: 32px;
+            max-width: 600px;
+            width: 90%;
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        
+        .screenshot-preview {
+            width: 100%;
+            max-height: 400px;
+            object-fit: contain;
+            border-radius: 16px;
+            margin-bottom: 20px;
+        }
+        
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            background: white;
+            border-radius: 16px;
+            padding: 16px 24px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transform: translateX(400px);
+            transition: 0.3s;
+            z-index: 2100;
+        }
+        
+        .toast.show { transform: translateX(0); }
+        
+        @media (max-width: 1200px) {
+            .app-container { grid-template-columns: 240px 1fr 260px; }
+        }
+        
+        .back-to-rooms {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            background: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 40px;
+            font-weight: 600;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 100;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+    </style>
 </head>
 <body>
-  <button class="menu-toggle" id="menuToggle"><i class="fas fa-bars"></i></button>
-  <div class="menu-overlay" id="menuOverlay"></div>
-
-  <div class="dashboard">
-    <!-- SIDEBAR - Navigation to external pages -->
-    <aside class="sidebar" id="sidebar">
-      <div class="logo">Study<span>Hub</span></div>
-      <nav class="nav-menu">
-        <div class="nav-item active" data-page="dashboard"><i class="fas fa-th-large"></i><span>Dashboard</span></div>
-        <div class="nav-item" data-page="studyrooms"><i class="fas fa-users"></i><span>Study Rooms</span></div>
-        <div class="nav-item" data-page="whiteboard"><i class="fas fa-chalkboard"></i><span>Whiteboard</span></div>
-        <div class="nav-item" data-page="mycourses"><i class="fas fa-book-open"></i><span>My Courses</span></div>
-        <div class="nav-item" data-page="filelibrary"><i class="fas fa-folder"></i><span>File Library</span></div>
-        <div class="nav-item" data-page="leaderboard"><i class="fas fa-trophy"></i><span>Leaderboard</span></div>
-        <div class="nav-item" data-page="studystats"><i class="fas fa-chart-line"></i><span>Study Stats</span></div>
-        <div class="nav-item" data-page="settings"><i class="fas fa-cog"></i><span>Settings</span></div>
-      </nav>
-
-      <div class="upgrade-card" id="upgradeTrigger">
-        <h4>Upgrade Plan</h4>
-        <p>Get unlimited access to all study rooms and premium features</p>
-        <div class="upgrade-btn"><span><i class="fas fa-crown"></i> Go Premium</span> <i class="fas fa-arrow-right"></i></div>
-      </div>
-
-      <div class="logout-item" id="logoutTrigger">
-        <i class="fas fa-sign-out-alt"></i> <span>Logout</span>
-      </div>
-    </aside>
-
-    <!-- MAIN CONTENT - Dashboard stays visible -->
-    <main class="main">
-      <!-- Welcome Header -->
-      <div class="welcome-header">
-        <div style="display: flex; align-items: center; gap: 20px;">
-          <div class="user-avatar" id="userAvatar">CU</div>
-          <div>
-            <h1 id="welcomeUser">Welcome back!</h1>
-            <p id="userUniversity">Loading your profile...</p>
-          </div>
-        </div>
-        <div class="create-room-btn" id="createRoomBtn">
-          <i class="fas fa-plus-circle"></i> Create Study Room
-        </div>
-      </div>
-
-      <!-- Two Column Section -->
-      <div class="two-column">
-        <!-- Active Study Rooms -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Active Study Rooms</h3>
-            <span class="live-badge"><i class="fas fa-circle"></i> <span id="liveCount">0</span> live</span>
-          </div>
-          <div class="rooms-grid" id="activeRooms"></div>
-        </div>
-
-        <!-- Upcoming Sessions -->
-        <div class="card">
-          <div class="card-header">
-            <h3>Upcoming Sessions</h3>
-            <i class="fas fa-ellipsis-h" style="color:#94a3b8;"></i>
-          </div>
-          <div class="sessions-list" id="upcomingSessions"></div>
-          <div class="add-session" id="addSessionBtn">
-            <i class="fas fa-plus-circle"></i> Add Session
-          </div>
-        </div>
-      </div>
-
-      <!-- Bottom Row -->
-      <div class="bottom-row">
-        <!-- Study Progress -->
-        <div class="card">
-          <div class="card-header">
-            <div style="display:flex; align-items:center; gap:12px; flex-wrap:wrap;">
-              <h3>Study Progress</h3>
-              <span class="week-selector" id="weekSelector" style="background:#f1f4f9; padding:6px 14px; border-radius:40px; font-size:14px; cursor:pointer;">
-                This Week <i class="fas fa-chevron-down"></i>
-              </span>
+    <div class="app-container">
+        <!-- Tools Sidebar -->
+        <div class="tools-sidebar">
+            <div class="room-info">
+                <div class="room-title" id="roomTitle">Loading...</div>
+                <div class="room-course" id="roomCourse">Loading...</div>
             </div>
-          </div>
-          <div class="chart-container" id="progressChart"></div>
-          <div style="text-align: center; margin-top: 20px;" id="totalHours">Total: 0 hours</div>
-        </div>
-
-        <!-- My Courses -->
-        <div class="card">
-          <div class="card-header">
-            <h3>My Courses</h3>
-            <span class="view-all" id="viewAllCourses">View All</span>
-          </div>
-          <div class="courses-list" id="myCourses"></div>
-        </div>
-      </div>
-    </main>
-  </div>
-
-  <!-- MODALS (All interactive features) -->
-  <div class="modal-overlay" id="modalOverlay">
-    <div class="modal-content" id="modalContent"></div>
-  </div>
-
-  <!-- Toast Notification -->
-  <div class="toast" id="toast">
-    <i class="fas" id="toastIcon"></i>
-    <span id="toastMessage"></span>
-  </div>
-
-  <!-- Firebase -->
-  <script src="firebase-config.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-
-  <script>
-    (function() {
-      // Check Firebase config
-      if (typeof firebaseConfig === 'undefined') {
-        console.error('Firebase config not found');
-        window.location.href = 'login.html';
-        return;
-      }
-
-      // Initialize Firebase
-      firebase.initializeApp(firebaseConfig);
-      const auth = firebase.auth();
-      const db = firebase.firestore();
-
-      // State
-      let currentUser = null;
-      let userData = null;
-
-      // Check authentication - STAY ON DASHBOARD if logged in
-      auth.onAuthStateChanged(async (user) => {
-        if (!user) {
-          // Only redirect to login if not authenticated
-          window.location.href = 'login.html';
-          return;
-        }
-
-        // User is logged in - STAY ON DASHBOARD
-        console.log('User logged in, staying on dashboard:', user.uid);
-        currentUser = user;
-        
-        try {
-          await loadUserData();
-          await Promise.all([
-            loadActiveRooms(),
-            loadUpcomingSessions(),
-            loadCourses(),
-            loadStudyProgress()
-          ]);
-          setupRealtimeListeners();
-        } catch (error) {
-          console.error('Error loading dashboard data:', error);
-          showToast('Error loading dashboard data', 'error');
-        }
-      });
-
-      // Load user data from Firestore
-      async function loadUserData() {
-        try {
-          const userDoc = await db.collection('users').doc(currentUser.uid).get();
-          
-          if (userDoc.exists) {
-            userData = userDoc.data();
             
-            // Update UI
-            document.getElementById('welcomeUser').textContent = 
-              `Welcome back, ${userData.fullName || currentUser.displayName || 'Student'}!`;
-            
-            document.getElementById('userUniversity').textContent = 
-              userData.university || 'University not set';
-            
-            // Set avatar
-            const initials = (userData.fullName || currentUser.email || 'CU')
-              .split(' ')
-              .map(n => n[0])
-              .join('')
-              .toUpperCase()
-              .substring(0, 2);
-            document.getElementById('userAvatar').textContent = initials;
-          } else {
-            // Create user document if it doesn't exist
-            await db.collection('users').doc(currentUser.uid).set({
-              email: currentUser.email,
-              fullName: currentUser.displayName || 'Student',
-              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-              lastLogin: firebase.firestore.FieldValue.serverTimestamp()
-            });
-            await loadUserData(); // Reload after creation
-          }
-        } catch (error) {
-          console.error('Error loading user data:', error);
-          showToast('Error loading user data', 'error');
-        }
-      }
-
-      // Load active rooms
-      async function loadActiveRooms() {
-        try {
-          const roomsSnapshot = await db.collection('activeRooms')
-            .where('participants', 'array-contains', currentUser.uid)
-            .limit(4)
-            .get();
-
-          const roomsEl = document.getElementById('activeRooms');
-          
-          if (roomsSnapshot.empty) {
-            roomsEl.innerHTML = '<div class="room-card"><div class="room-title">No active rooms</div><p>Join a study room to get started</p></div>';
-            document.getElementById('liveCount').textContent = '0';
-            return;
-          }
-
-          roomsEl.innerHTML = roomsSnapshot.docs.map(doc => {
-            const room = doc.data();
-            return `
-              <div class="room-card" data-room-id="${doc.id}" onclick="window.joinRoom('${doc.id}')">
-                <div class="room-title">${room.title || 'Untitled Room'}</div>
-                <div class="room-meta">
-                  <span class="student-count"><i class="fas fa-user-graduate"></i> ${room.participants?.length || 1} Students</span>
-                  ${room.live ? '<span class="live-tag"><i class="fas fa-circle"></i> Live</span>' : '<span class="join-tag">Join</span>'}
+            <div class="tool-section">
+                <h4>Drawing Tools</h4>
+                <div class="tool-buttons">
+                    <div class="tool-btn active" id="toolPen" onclick="window.setTool('pen')"><i class="fas fa-pen"></i></div>
+                    <div class="tool-btn" id="toolEraser" onclick="window.setTool('eraser')"><i class="fas fa-eraser"></i></div>
+                    <div class="tool-btn" id="toolText" onclick="window.setTool('text')"><i class="fas fa-font"></i></div>
+                    <div class="tool-btn" id="toolShape" onclick="window.setTool('shape')"><i class="fas fa-shapes"></i></div>
                 </div>
-                <div class="room-time"><i class="far fa-clock"></i> ${room.duration || '00:00'}</div>
-              </div>
-            `;
-          }).join('');
-
-          document.getElementById('liveCount').textContent = roomsSnapshot.size;
-        } catch (error) {
-          console.error('Error loading rooms:', error);
-        }
-      }
-
-      // Load upcoming sessions
-      async function loadUpcomingSessions() {
-        try {
-          const sessionsSnapshot = await db.collection('upcomingSessions')
-            .where('attendees', 'array-contains', currentUser.uid)
-            .orderBy('time')
-            .limit(3)
-            .get();
-
-          const sessionsEl = document.getElementById('upcomingSessions');
-          
-          if (sessionsSnapshot.empty) {
-            sessionsEl.innerHTML = '<div class="session-item">No upcoming sessions</div>';
-            return;
-          }
-
-          sessionsEl.innerHTML = sessionsSnapshot.docs.map(doc => {
-            const session = doc.data();
-            return `
-              <div class="session-item" data-session-id="${doc.id}" onclick="window.viewSession('${doc.id}')">
-                <div>
-                  <h4>${session.code || 'Course'}</h4>
-                  <p>${session.title || ''}</p>
-                  <div class="session-time"><i class="far fa-clock"></i> ${session.time || 'TBD'}</div>
+            </div>
+            
+            <div class="tool-section">
+                <h4>Colors</h4>
+                <div class="color-picker">
+                    <div class="color-option selected" style="background: #000000;" onclick="window.setColor('#000000', this)"></div>
+                    <div class="color-option" style="background: #6366f1;" onclick="window.setColor('#6366f1', this)"></div>
+                    <div class="color-option" style="background: #ef4444;" onclick="window.setColor('#ef4444', this)"></div>
+                    <div class="color-option" style="background: #10b981;" onclick="window.setColor('#10b981', this)"></div>
+                    <div class="color-option" style="background: #f59e0b;" onclick="window.setColor('#f59e0b', this)"></div>
+                    <div class="color-option" style="background: #8b5cf6;" onclick="window.setColor('#8b5cf6', this)"></div>
+                    <div class="color-option" style="background: #ec4899;" onclick="window.setColor('#ec4899', this)"></div>
+                    <div class="color-option" style="background: #ffffff; border: 2px solid #e2e8f0;" onclick="window.setColor('#ffffff', this)"></div>
                 </div>
-                <div class="session-join" onclick="event.stopPropagation(); window.joinSession('${doc.id}')">Join</div>
-              </div>
-            `;
-          }).join('');
-        } catch (error) {
-          console.error('Error loading sessions:', error);
-        }
-      }
-
-      // Load courses
-      async function loadCourses() {
-        try {
-          const coursesSnapshot = await db.collection('courses')
-            .where('enrolledUsers', 'array-contains', currentUser.uid)
-            .limit(3)
-            .get();
-
-          const coursesEl = document.getElementById('myCourses');
-          
-          if (coursesSnapshot.empty) {
-            coursesEl.innerHTML = '<div class="course-item">No courses yet</div>';
-            return;
-          }
-
-          coursesEl.innerHTML = coursesSnapshot.docs.map(doc => {
-            const course = doc.data();
-            return `
-              <div class="course-item" data-course-id="${doc.id}" onclick="window.viewCourse('${doc.id}')">
-                <span>${course.name || course.code || 'Course'}</span>
-                <i class="fas fa-chevron-right"></i>
-              </div>
-            `;
-          }).join('');
-        } catch (error) {
-          console.error('Error loading courses:', error);
-        }
-      }
-
-      // Load study progress
-      async function loadStudyProgress() {
-        try {
-          const progressDoc = await db.collection('studyProgress').doc(currentUser.uid).get();
-          
-          let hours = [2, 3, 4, 5, 3, 2, 1]; // Default
-          
-          if (progressDoc.exists) {
-            hours = progressDoc.data().hours || hours;
-          } else {
-            // Create default progress
-            await db.collection('studyProgress').doc(currentUser.uid).set({
-              hours: hours,
-              updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-            });
-          }
-
-          renderProgressChart(hours);
-          
-          const total = hours.reduce((a, b) => a + b, 0);
-          document.getElementById('totalHours').textContent = `Total: ${total} hours this week`;
-        } catch (error) {
-          console.error('Error loading progress:', error);
-        }
-      }
-
-      // Render progress chart
-      function renderProgressChart(hours) {
-        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-        const max = Math.max(...hours, 8);
-        const progEl = document.getElementById('progressChart');
-        
-        progEl.innerHTML = hours.map((h, i) => `
-          <div class="chart-bar" onclick="window.showDailyProgress('${days[i]}', ${h})">
-            <div class="bar">
-              <div class="fill" style="height: ${(h/max)*100}%;"></div>
             </div>
-            <span class="day">${days[i]}</span>
-          </div>
-        `).join('');
-      }
-
-      // Setup real-time listeners
-      function setupRealtimeListeners() {
-        // Listen for room changes
-        db.collection('activeRooms')
-          .where('participants', 'array-contains', currentUser.uid)
-          .onSnapshot((snapshot) => {
-            loadActiveRooms();
-          });
-
-        // Listen for session changes
-        db.collection('upcomingSessions')
-          .where('attendees', 'array-contains', currentUser.uid)
-          .onSnapshot(() => {
-            loadUpcomingSessions();
-          });
-      }
-
-      // ========== INTERACTIVE FEATURES ==========
-
-      // Create Study Room
-      document.getElementById('createRoomBtn').addEventListener('click', () => {
-        showCreateRoomModal();
-      });
-
-      // Add Session
-      document.getElementById('addSessionBtn').addEventListener('click', () => {
-        showAddSessionModal();
-      });
-
-      // Week selector
-      document.getElementById('weekSelector').addEventListener('click', () => {
-        showWeekStatsModal();
-      });
-
-      // View all courses
-      document.getElementById('viewAllCourses').addEventListener('click', () => {
-        showAllCoursesModal();
-      });
-
-      // Upgrade plan
-      document.getElementById('upgradeTrigger').addEventListener('click', () => {
-        showUpgradeModal();
-      });
-
-      // MODAL FUNCTIONS
-      function showCreateRoomModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        
-        modalContent.innerHTML = `
-          <div class="modal-header">
-            <h2>Create Study Room</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Room Title</label>
-              <input type="text" id="roomTitle" placeholder="e.g., Physics 201 Study Group">
+            
+            <div class="tool-section">
+                <h4>Shapes</h4>
+                <div class="tool-buttons">
+                    <div class="tool-btn" onclick="window.setShape('rectangle')"><i class="far fa-square"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('circle')"><i class="far fa-circle"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('line')"><i class="fas fa-slash"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('arrow')"><i class="fas fa-arrow-right"></i></div>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Course Code</label>
-              <input type="text" id="roomCourse" placeholder="e.g., PHY 201">
+            
+            <div class="tool-section">
+                <h4>Math Symbols</h4>
+                <div class="math-symbols">
+                    <div class="math-btn" onclick="window.insertMathSymbol('∫')">∫</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∑')">∑</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('√')">√</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('π')">π</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∞')">∞</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('θ')">θ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('α')">α</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('β')">β</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('γ')">γ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('Δ')">Δ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∂')">∂</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∇')">∇</div>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Description</label>
-              <textarea id="roomDesc" rows="3" placeholder="What will you study?"></textarea>
+            
+            <div class="tool-section">
+                <h4>Actions</h4>
+                <div class="tool-buttons">
+                    <div class="tool-btn" onclick="window.clearCanvas()"><i class="fas fa-trash"></i></div>
+                    <div class="tool-btn" onclick="window.takeScreenshot()"><i class="fas fa-camera"></i></div>
+                    <div class="tool-btn" onclick="window.downloadCanvas()"><i class="fas fa-download"></i></div>
+                    <div class="tool-btn" onclick="window.toggleGrid()"><i class="fas fa-border-all"></i></div>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Duration (hours)</label>
-              <input type="number" id="roomDuration" min="1" max="12" value="2">
+        </div>
+        
+        <!-- Whiteboard Area -->
+        <div class="whiteboard-area">
+            <canvas id="whiteboard"></canvas>
+            
+            <div class="whiteboard-header">
+                <div class="participants-bar">
+                    <div class="participant-avatars" id="participantAvatars"></div>
+                    <span id="participantCount">0 participants</span>
+                    <span class="live-audio-indicator"><i class="fas fa-circle"></i> LIVE AUDIO</span>
+                </div>
             </div>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="modal-btn modal-btn-primary" onclick="createRoom()">Create Room</button>
-          </div>
-        `;
+        </div>
         
-        modal.classList.add('show');
-      }
-
-      function showAddSessionModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        
-        modalContent.innerHTML = `
-          <div class="modal-header">
-            <h2>Add Study Session</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <div class="form-group">
-              <label>Session Title</label>
-              <input type="text" id="sessionTitle" placeholder="e.g., Organic Chemistry Review">
+        <!-- Chat Sidebar -->
+        <div class="chat-sidebar">
+            <div class="chat-header">
+                <h3><i class="fas fa-comments"></i> Live Chat</h3>
+                <div class="audio-controls">
+                    <button class="audio-btn" id="micBtn" onclick="window.toggleMicrophone()">
+                        <i class="fas fa-microphone"></i> Mic
+                    </button>
+                    <button class="audio-btn" id="speakerBtn" onclick="window.toggleSpeaker()">
+                        <i class="fas fa-volume-up"></i> Speaker
+                    </button>
+                </div>
+                <div style="margin-top: 10px; font-size: 12px; color: #64748b;">
+                    <span id="speakerIndicator">No one speaking</span>
+                </div>
             </div>
-            <div class="form-group">
-              <label>Course</label>
-              <select id="sessionCourse">
-                <option value="">Select course</option>
-                <option value="CHE 102">CHE 102 - Organic Chemistry</option>
-                <option value="PHY 201">PHY 201 - Physics</option>
-                <option value="MAT 202">MAT 202 - Calculus</option>
-              </select>
+            
+            <div class="chat-messages" id="chatMessages"></div>
+            
+            <div class="chat-input-area">
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a question..." onkeypress="window.handleChatKeyPress(event)">
+                <button class="send-btn" onclick="window.sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
-            <div class="form-group">
-              <label>Date & Time</label>
-              <input type="datetime-local" id="sessionDateTime">
+        </div>
+    </div>
+    
+    <button class="back-to-rooms" onclick="window.leaveRoom()">
+        <i class="fas fa-arrow-left"></i> Back to Rooms
+    </button>
+    
+    <!-- Screenshot Modal -->
+    <div class="modal-overlay" id="screenshotModal">
+        <div class="modal-content">
+            <h2 style="margin-bottom: 20px;">Screenshot Captured</h2>
+            <img id="screenshotPreview" class="screenshot-preview" src="" alt="Screenshot">
+            <div style="display: flex; gap: 12px; justify-content: flex-end;">
+                <button class="audio-btn" onclick="window.closeScreenshotModal()">Close</button>
+                <button class="audio-btn" style="background: #6366f1; color: white;" onclick="window.downloadScreenshot()">Download</button>
             </div>
-            <div class="form-group">
-              <label>Duration (hours)</label>
-              <input type="number" id="sessionDuration" min="1" max="4" value="1">
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Cancel</button>
-            <button class="modal-btn modal-btn-primary" onclick="addSession()">Add Session</button>
-          </div>
-        `;
-        
-        modal.classList.add('show');
-      }
-
-      function showWeekStatsModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        
-        modalContent.innerHTML = `
-          <div class="modal-header">
-            <h2>Weekly Study Stats</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <p>Loading detailed statistics...</p>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-primary" onclick="closeModal()">Close</button>
-          </div>
-        `;
-        
-        modal.classList.add('show');
-        
-        // Load detailed stats
-        setTimeout(() => {
-          loadDetailedStats();
-        }, 500);
-      }
-
-      function showAllCoursesModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        
-        modalContent.innerHTML = `
-          <div class="modal-header">
-            <h2>My Courses</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body" id="allCoursesList">
-            <div class="loader"></div>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Close</button>
-          </div>
-        `;
-        
-        modal.classList.add('show');
-        
-        // Load all courses
-        loadAllCourses();
-      }
-
-      function showUpgradeModal() {
-        const modal = document.getElementById('modalOverlay');
-        const modalContent = document.getElementById('modalContent');
-        
-        modalContent.innerHTML = `
-          <div class="modal-header">
-            <h2>Upgrade to Premium</h2>
-            <button class="modal-close" onclick="closeModal()">&times;</button>
-          </div>
-          <div class="modal-body">
-            <h3 style="margin-bottom: 20px;">✨ Premium Features</h3>
-            <ul style="list-style: none; padding: 0;">
-              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Unlimited study rooms</li>
-              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Advanced whiteboard tools</li>
-              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Priority support</li>
-              <li style="margin-bottom: 15px;"><i class="fas fa-check-circle" style="color: #10b981; margin-right: 10px;"></i> Download study materials</li>
-            </ul>
-            <div style="background: #f1f4f9; padding: 20px; border-radius: 16px; margin-top: 20px;">
-              <p style="font-size: 24px; font-weight: 700; color: #6366f1;">$9.99/month</p>
-              <p style="color: #64748b;">Cancel anytime</p>
-            </div>
-          </div>
-          <div class="modal-footer">
-            <button class="modal-btn modal-btn-secondary" onclick="closeModal()">Not now</button>
-            <button class="modal-btn modal-btn-primary" onclick="upgradeToPremium()">Upgrade Now</button>
-          </div>
-        `;
-        
-        modal.classList.add('show');
-      }
-
-      // ========== ACTION FUNCTIONS ==========
-      window.createRoom = async function() {
-        const title = document.getElementById('roomTitle')?.value;
-        const course = document.getElementById('roomCourse')?.value;
-        const desc = document.getElementById('roomDesc')?.value;
-        const duration = document.getElementById('roomDuration')?.value;
-
-        if (!title || !course) {
-          showToast('Please fill in required fields', 'error');
-          return;
+        </div>
+    </div>
+    
+    <!-- Toast -->
+    <div class="toast" id="toast">
+        <i class="fas" id="toastIcon"></i>
+        <span id="toastMessage"></span>
+    </div>
+    
+    <script>
+        // Make sure firebase-config.js exists
+        if (typeof firebaseConfig === 'undefined') {
+            console.error('Firebase config not found');
+            window.location.href = 'login.html';
         }
-
-        try {
-          await db.collection('activeRooms').add({
-            title: `${course} – ${title}`,
-            course: course,
-            description: desc,
-            duration: `${String(duration).padStart(2, '0')}:00:00`,
-            live: true,
-            participants: [currentUser.uid],
-            createdBy: currentUser.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          closeModal();
-          showToast('Study room created successfully!', 'success');
-        } catch (error) {
-          showToast('Error creating room', 'error');
-        }
-      };
-
-      window.addSession = async function() {
-        const title = document.getElementById('sessionTitle')?.value;
-        const course = document.getElementById('sessionCourse')?.value;
-        const dateTime = document.getElementById('sessionDateTime')?.value;
-
-        if (!title || !course || !dateTime) {
-          showToast('Please fill in all fields', 'error');
-          return;
-        }
-
-        try {
-          const time = new Date(dateTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-          
-          await db.collection('upcomingSessions').add({
-            code: course,
-            title: title,
-            time: time,
-            datetime: dateTime,
-            attendees: [currentUser.uid],
-            createdBy: currentUser.uid,
-            createdAt: firebase.firestore.FieldValue.serverTimestamp()
-          });
-
-          closeModal();
-          showToast('Session added successfully!', 'success');
-        } catch (error) {
-          showToast('Error adding session', 'error');
-        }
-      };
-
-      window.joinRoom = async function(roomId) {
-        try {
-          await db.collection('activeRooms').doc(roomId).update({
-            participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-          });
-          showToast('Joined room successfully!', 'success');
-        } catch (error) {
-          showToast('Error joining room', 'error');
-        }
-      };
-
-      window.joinSession = async function(sessionId) {
-        try {
-          await db.collection('upcomingSessions').doc(sessionId).update({
-            attendees: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-          });
-          showToast('You joined the session!', 'success');
-        } catch (error) {
-          showToast('Error joining session', 'error');
-        }
-      };
-
-      window.viewSession = function(sessionId) {
-        showToast('Session details loaded', 'success');
-      };
-
-      window.viewCourse = function(courseId) {
-        showToast('Opening course materials...', 'success');
-      };
-
-      window.showDailyProgress = function(day, hours) {
-        showToast(`You studied ${hours} hours on ${day}`, 'success');
-      };
-
-      window.upgradeToPremium = function() {
-        closeModal();
-        showToast('Redirecting to payment...', 'success');
-        setTimeout(() => {
-          window.location.href = 'premium.html';
-        }, 1500);
-      };
-
-      // Load all courses
-      async function loadAllCourses() {
-        try {
-          const coursesSnapshot = await db.collection('courses')
-            .where('enrolledUsers', 'array-contains', currentUser.uid)
-            .get();
-
-          const coursesList = document.getElementById('allCoursesList');
-          
-          if (coursesSnapshot.empty) {
-            coursesList.innerHTML = '<p>No courses enrolled yet.</p>';
-            return;
-          }
-
-          coursesList.innerHTML = coursesSnapshot.docs.map(doc => {
-            const course = doc.data();
-            return `
-              <div class="course-item" style="margin-bottom: 10px;">
-                <span><strong>${course.code || 'Course'}</strong> - ${course.name || ''}</span>
-                <i class="fas fa-chevron-right"></i>
-              </div>
-            `;
-          }).join('');
-        } catch (error) {
-          console.error('Error loading courses:', error);
-        }
-      }
-
-      // Load detailed stats
-      async function loadDetailedStats() {
-        // Implementation for detailed stats
-        const statsEl = document.querySelector('.modal-body');
-        if (statsEl) {
-          statsEl.innerHTML = '<p>Your study statistics for this week:</p><ul><li>Most productive day: Wednesday</li><li>Average daily study: 3.5 hours</li><li>Total study time: 24 hours</li></ul>';
-        }
-      }
-
-      // Close modal
-      window.closeModal = function() {
-        document.getElementById('modalOverlay').classList.remove('show');
-      };
-
-      // Toast function
-      function showToast(message, type = 'success') {
-        const toast = document.getElementById('toast');
-        const toastIcon = document.getElementById('toastIcon');
-        const toastMessage = document.getElementById('toastMessage');
         
-        toast.className = `toast ${type}`;
-        toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
-        toastMessage.textContent = message;
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
         
-        toast.classList.add('show');
+        // Room state
+        let currentUser = null;
+        let roomId = null;
+        let roomData = null;
+        let isCreator = false;
         
-        setTimeout(() => {
-          toast.classList.remove('show');
-        }, 3000);
-      }
-
-      // ========== SIDEBAR NAVIGATION - EXTERNAL PAGES ==========
-      document.querySelectorAll('.nav-item').forEach(item => {
-        item.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const page = item.dataset.page;
-          // Only navigate if not dashboard
-          if (page && page !== 'dashboard') {
-            // Navigate to external page
-            window.location.href = `${page}.html`;
-          }
-          // If dashboard, stay on current page (do nothing)
+        // Whiteboard state
+        const canvas = document.getElementById('whiteboard');
+        const ctx = canvas.getContext('2d');
+        let drawing = false;
+        let currentTool = 'pen';
+        let currentColor = '#000000';
+        let currentShape = 'rectangle';
+        let lineWidth = 2;
+        let lastX = 0, lastY = 0;
+        let startX, startY;
+        
+        // Audio state
+        let agoraClient = null;
+        let localAudioTrack = null;
+        let isMicOn = false;
+        let isSpeakerOn = true;
+        let remoteUsers = new Map();
+        
+        // Resize canvas
+        function resizeCanvas() {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            redrawCanvas();
+        }
+        
+        window.addEventListener('resize', resizeCanvas);
+        
+        // Auth check
+        auth.onAuthStateChanged(async (user) => {
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+            
+            currentUser = user;
+            
+            // Get room ID from URL
+            const urlParams = new URLSearchParams(window.location.search);
+            roomId = urlParams.get('room');
+            
+            if (!roomId) {
+                showToast('No room specified', 'error');
+                setTimeout(() => window.location.href = 'studyrooms.html', 2000);
+                return;
+            }
+            
+            await loadRoomData();
+            await loadParticipants();
+            setupRealtimeWhiteboard();
+            setupRealtimeChat();
+            initAgora();
+            resizeCanvas();
         });
-      });
-
-      // Logout
-      document.getElementById('logoutTrigger').addEventListener('click', async () => {
-        try {
-          await auth.signOut();
-          window.location.href = 'login.html';
-        } catch (error) {
-          console.error('Logout error:', error);
-          showToast('Error logging out', 'error');
+        
+        // Load room data
+        async function loadRoomData() {
+            try {
+                const doc = await db.collection('activeRooms').doc(roomId).get();
+                
+                if (!doc.exists) {
+                    showToast('Room not found', 'error');
+                    setTimeout(() => window.location.href = 'studyrooms.html', 2000);
+                    return;
+                }
+                
+                roomData = doc.data();
+                isCreator = roomData.createdBy === currentUser.uid;
+                
+                document.getElementById('roomTitle').textContent = roomData.title || 'Untitled Room';
+                document.getElementById('roomCourse').textContent = roomData.course || 'General';
+                
+                // Add user to participants if not already
+                if (!roomData.participants?.includes(currentUser.uid)) {
+                    await db.collection('activeRooms').doc(roomId).update({
+                        participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                    });
+                }
+            } catch (error) {
+                showToast('Error loading room', 'error');
+            }
         }
-      });
-
-      // Mobile sidebar toggle
-      const sidebar = document.getElementById('sidebar');
-      const menuToggle = document.getElementById('menuToggle');
-      const menuOverlay = document.getElementById('menuOverlay');
-
-      menuToggle.addEventListener('click', () => {
-        sidebar.classList.toggle('open');
-        menuOverlay.classList.toggle('active');
-      });
-
-      menuOverlay.addEventListener('click', () => {
-        sidebar.classList.remove('open');
-        menuOverlay.classList.remove('active');
-      });
-
-      // Expose functions globally
-      window.showToast = showToast;
-    })();
-  </script>
+        
+        // Load participants
+        async function loadParticipants() {
+            try {
+                const doc = await db.collection('activeRooms').doc(roomId).get();
+                const participants = doc.data()?.participants || [];
+                
+                document.getElementById('participantCount').textContent = `${participants.length} participants`;
+                
+                // Load user details for avatars
+                const avatarsHtml = participants.slice(0, 5).map((uid, i) => {
+                    return `<div class="participant-avatar" style="background: hsl(${i * 40}, 70%, 60%);">${uid.substring(0, 2).toUpperCase()}</div>`;
+                }).join('');
+                
+                document.getElementById('participantAvatars').innerHTML = avatarsHtml;
+            } catch (error) {
+                console.error('Error loading participants:', error);
+            }
+        }
+        
+        // Setup real-time whiteboard
+        function setupRealtimeWhiteboard() {
+            db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                .orderBy('timestamp')
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            const stroke = change.doc.data();
+                            if (stroke.userId !== currentUser.uid) {
+                                drawRemoteStroke(stroke);
+                            }
+                        }
+                    });
+                });
+        }
+        
+        // Setup real-time chat
+        function setupRealtimeChat() {
+            db.collection('roomChat').doc(roomId).collection('messages')
+                .orderBy('timestamp')
+                .limit(50)
+                .onSnapshot((snapshot) => {
+                    snapshot.docChanges().forEach((change) => {
+                        if (change.type === 'added') {
+                            displayMessage(change.doc.data());
+                        }
+                    });
+                });
+        }
+        
+        // Initialize Agora
+        async function initAgora() {
+            try {
+                // Check if Agora is available
+                if (typeof AgoraRTC === 'undefined') {
+                    console.error('AgoraRTC not loaded');
+                    return;
+                }
+                
+                agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+                
+                // Set client role based on user
+                await agoraClient.setClientRole(isCreator ? 'host' : 'audience');
+                
+                // Join channel with dummy token (in production, get from server)
+                const appId = 'YOUR_AGORA_APP_ID'; // Replace with your Agora app ID
+                const token = null; // In production, generate token
+                
+                await agoraClient.join(appId, roomId, token, currentUser.uid);
+                
+                // Setup listeners
+                agoraClient.on('user-published', async (user, mediaType) => {
+                    await agoraClient.subscribe(user, mediaType);
+                    
+                    if (mediaType === 'audio') {
+                        remoteUsers.set(user.uid, user);
+                        if (isSpeakerOn) {
+                            user.audioTrack.play();
+                        }
+                        updateSpeakerIndicator();
+                    }
+                });
+                
+                agoraClient.on('user-unpublished', (user) => {
+                    remoteUsers.delete(user.uid);
+                    updateSpeakerIndicator();
+                });
+                
+                agoraClient.on('user-left', (user) => {
+                    remoteUsers.delete(user.uid);
+                    updateSpeakerIndicator();
+                });
+                
+                showToast('Connected to audio channel', 'success');
+            } catch (error) {
+                console.error('Agora init error:', error);
+                showToast('Audio connection failed', 'error');
+            }
+        }
+        
+        // Toggle microphone
+        window.toggleMicrophone = async function() {
+            if (!agoraClient) return;
+            
+            try {
+                if (!isMicOn) {
+                    localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    await agoraClient.publish(localAudioTrack);
+                    
+                    // Monitor audio level
+                    localAudioTrack.on('volume-indicator', (volume) => {
+                        if (volume > 10) {
+                            document.getElementById('micBtn').classList.add('speaking');
+                        } else {
+                            document.getElementById('micBtn').classList.remove('speaking');
+                        }
+                    });
+                    
+                    document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
+                    isMicOn = true;
+                } else {
+                    await localAudioTrack.close();
+                    document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone"></i> Mic';
+                    isMicOn = false;
+                }
+            } catch (error) {
+                showToast('Error toggling microphone', 'error');
+            }
+        };
+        
+        // Toggle speaker
+        window.toggleSpeaker = function() {
+            isSpeakerOn = !isSpeakerOn;
+            document.getElementById('speakerBtn').innerHTML = isSpeakerOn ? 
+                '<i class="fas fa-volume-up"></i> Speaker' : 
+                '<i class="fas fa-volume-mute"></i> Muted';
+            
+            // Mute/unmute all remote audio
+            remoteUsers.forEach(user => {
+                if (user.audioTrack) {
+                    isSpeakerOn ? user.audioTrack.play() : user.audioTrack.stop();
+                }
+            });
+        };
+        
+        // Update speaker indicator
+        function updateSpeakerIndicator() {
+            const speakingUsers = remoteUsers.size;
+            document.getElementById('speakerIndicator').textContent = 
+                speakingUsers > 0 ? `${speakingUsers} speaking` : 'No one speaking';
+        }
+        
+        // Drawing functions
+        function startDrawing(e) {
+            e.preventDefault();
+            drawing = true;
+            const pos = getCanvasCoordinates(e);
+            startX = pos.x;
+            startY = pos.y;
+            lastX = pos.x;
+            lastY = pos.y;
+            
+            if (currentTool === 'pen') {
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+            }
+        }
+        
+        function draw(e) {
+            e.preventDefault();
+            if (!drawing) return;
+            
+            const pos = getCanvasCoordinates(e);
+            
+            if (currentTool === 'pen') {
+                ctx.strokeStyle = currentColor;
+                ctx.lineWidth = lineWidth;
+                ctx.lineTo(pos.x, pos.y);
+                ctx.stroke();
+                ctx.beginPath();
+                ctx.moveTo(pos.x, pos.y);
+                
+                // Send stroke to Firebase
+                saveStroke({
+                    type: 'pen',
+                    x: pos.x,
+                    y: pos.y,
+                    color: currentColor,
+                    width: lineWidth,
+                    timestamp: Date.now()
+                });
+                
+                lastX = pos.x;
+                lastY = pos.y;
+            }
+        }
+        
+        function stopDrawing(e) {
+            e.preventDefault();
+            if (drawing && currentTool === 'shape' && startX && startY) {
+                const pos = getCanvasCoordinates(e);
+                drawShape(startX, startY, pos.x, pos.y);
+            }
+            drawing = false;
+        }
+        
+        function drawShape(x1, y1, x2, y2) {
+            ctx.strokeStyle = currentColor;
+            ctx.lineWidth = lineWidth;
+            
+            switch(currentShape) {
+                case 'rectangle':
+                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                    break;
+                case 'circle':
+                    const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                    ctx.beginPath();
+                    ctx.arc(x1, y1, radius, 0, 2 * Math.PI);
+                    ctx.stroke();
+                    break;
+                case 'line':
+                    ctx.beginPath();
+                    ctx.moveTo(x1, y1);
+                    ctx.lineTo(x2, y2);
+                    ctx.stroke();
+                    break;
+            }
+            
+            // Save shape
+            saveStroke({
+                type: 'shape',
+                shape: currentShape,
+                x1: x1,
+                y1: y1,
+                x2: x2,
+                y2: y2,
+                color: currentColor,
+                width: lineWidth,
+                timestamp: Date.now()
+            });
+        }
+        
+        // Save stroke to Firebase
+        async function saveStroke(strokeData) {
+            try {
+                await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').add({
+                    ...strokeData,
+                    userId: currentUser.uid,
+                    roomId: roomId
+                });
+            } catch (error) {
+                console.error('Error saving stroke:', error);
+            }
+        }
+        
+        // Draw remote stroke
+        function drawRemoteStroke(stroke) {
+            if (stroke.type === 'pen') {
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.width;
+                ctx.beginPath();
+                ctx.moveTo(stroke.x, stroke.y);
+                ctx.lineTo(stroke.x + 1, stroke.y + 1);
+                ctx.stroke();
+            } else if (stroke.type === 'shape') {
+                ctx.strokeStyle = stroke.color;
+                ctx.lineWidth = stroke.width;
+                drawShape(stroke.x1, stroke.y1, stroke.x2, stroke.y2);
+            }
+        }
+        
+        // Get canvas coordinates
+        function getCanvasCoordinates(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            
+            let clientX, clientY;
+            
+            if (e.touches) {
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
+            } else {
+                clientX = e.clientX;
+                clientY = e.clientY;
+            }
+            
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            
+            // Clamp to canvas boundaries
+            return { 
+                x: Math.max(0, Math.min(canvas.width, x)),
+                y: Math.max(0, Math.min(canvas.height, y))
+            };
+        }
+        
+        // Tool functions
+        window.setTool = function(tool) {
+            currentTool = tool;
+            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`).classList.add('active');
+        };
+        
+        window.setColor = function(color, element) {
+            currentColor = color;
+            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+            element.classList.add('selected');
+        };
+        
+        window.setShape = function(shape) {
+            currentShape = shape;
+            setTool('shape');
+        };
+        
+        window.insertMathSymbol = function(symbol) {
+            setTool('text');
+            // Insert symbol at last known position
+            if (lastX && lastY) {
+                ctx.font = '24px Arial';
+                ctx.fillStyle = currentColor;
+                ctx.fillText(symbol, lastX, lastY);
+                
+                saveStroke({
+                    type: 'text',
+                    text: symbol,
+                    x: lastX,
+                    y: lastY,
+                    color: currentColor,
+                    size: 24,
+                    timestamp: Date.now()
+                });
+            }
+        };
+        
+        // Clear canvas
+        window.clearCanvas = async function() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Clear Firebase strokes
+            try {
+                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
+                const batch = db.batch();
+                strokes.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                showToast('Canvas cleared', 'success');
+            } catch (error) {
+                console.error('Error clearing canvas:', error);
+                showToast('Error clearing canvas', 'error');
+            }
+        };
+        
+        // Redraw canvas
+        async function redrawCanvas() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            try {
+                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                    .orderBy('timestamp')
+                    .get();
+                
+                strokes.forEach(doc => drawRemoteStroke(doc.data()));
+            } catch (error) {
+                console.error('Error redrawing canvas:', error);
+            }
+        }
+        
+        // Take screenshot
+        window.takeScreenshot = function() {
+            const dataURL = canvas.toDataURL('image/png');
+            document.getElementById('screenshotPreview').src = dataURL;
+            document.getElementById('screenshotModal').classList.add('show');
+        };
+        
+        window.closeScreenshotModal = function() {
+            document.getElementById('screenshotModal').classList.remove('show');
+        };
+        
+        window.downloadScreenshot = function() {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `whiteboard-${roomId}-${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+        };
+        
+        // Download canvas
+        window.downloadCanvas = function() {
+            const dataURL = canvas.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.download = `whiteboard-${roomId}-${Date.now()}.png`;
+            link.href = dataURL;
+            link.click();
+        };
+        
+        // Toggle grid
+        window.toggleGrid = function() {
+            showToast('Grid feature coming soon', 'info');
+        };
+        
+        // Chat functions
+        window.sendChatMessage = async function() {
+            const input = document.getElementById('chatInput');
+            const text = input.value.trim();
+            
+            if (!text) return;
+            
+            try {
+                await db.collection('roomChat').doc(roomId).collection('messages').add({
+                    userId: currentUser.uid,
+                    userName: currentUser.displayName || 'Student',
+                    text: text,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                input.value = '';
+            } catch (error) {
+                showToast('Error sending message', 'error');
+            }
+        };
+        
+        window.handleChatKeyPress = function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        };
+        
+        function displayMessage(message) {
+            const messagesEl = document.getElementById('chatMessages');
+            const isOwn = message.userId === currentUser.uid;
+            
+            const messageEl = document.createElement('div');
+            messageEl.className = `message ${isOwn ? 'own' : ''}`;
+            messageEl.innerHTML = `
+                <div class="message-sender">${message.userName || 'Student'}</div>
+                <div class="message-text">${message.text}</div>
+            `;
+            
+            messagesEl.appendChild(messageEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+        }
+        
+        // Leave room
+        window.leaveRoom = async function() {
+            try {
+                // Remove user from participants
+                await db.collection('activeRooms').doc(roomId).update({
+                    participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+                });
+                
+                // Leave Agora channel
+                if (agoraClient) {
+                    await agoraClient.leave();
+                }
+                
+                window.location.href = 'studyrooms.html';
+            } catch (error) {
+                window.location.href = 'studyrooms.html';
+            }
+        };
+        
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            const toastIcon = document.getElementById('toastIcon');
+            const toastMessage = document.getElementById('toastMessage');
+            
+            toast.className = `toast ${type}`;
+            toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+            toastMessage.textContent = message;
+            
+            toast.classList.add('show');
+            setTimeout(() => toast.classList.remove('show'), 3000);
+        }
+        
+        // Event listeners
+        canvas.addEventListener('mousedown', startDrawing);
+        canvas.addEventListener('mousemove', draw);
+        canvas.addEventListener('mouseup', stopDrawing);
+        canvas.addEventListener('mouseleave', stopDrawing);
+        
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+    </script>
 </body>
 </html>
