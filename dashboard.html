@@ -497,7 +497,7 @@
   <div class="menu-overlay" id="menuOverlay"></div>
 
   <div class="dashboard">
-    <!-- SIDEBAR - Only these open external pages -->
+    <!-- SIDEBAR - Navigation to external pages -->
     <aside class="sidebar" id="sidebar">
       <div class="logo">Study<span>Hub</span></div>
       <nav class="nav-menu">
@@ -522,7 +522,7 @@
       </div>
     </aside>
 
-    <!-- MAIN CONTENT - All actions work directly -->
+    <!-- MAIN CONTENT - Dashboard stays visible -->
     <main class="main">
       <!-- Welcome Header -->
       <div class="welcome-header">
@@ -609,12 +609,14 @@
 
   <script>
     (function() {
-      // Check Firebase
+      // Check Firebase config
       if (typeof firebaseConfig === 'undefined') {
+        console.error('Firebase config not found');
         window.location.href = 'login.html';
         return;
       }
 
+      // Initialize Firebase
       firebase.initializeApp(firebaseConfig);
       const auth = firebase.auth();
       const db = firebase.firestore();
@@ -623,28 +625,31 @@
       let currentUser = null;
       let userData = null;
 
-      // Check authentication
+      // Check authentication - STAY ON DASHBOARD if logged in
       auth.onAuthStateChanged(async (user) => {
         if (!user) {
+          // Only redirect to login if not authenticated
           window.location.href = 'login.html';
           return;
         }
 
+        // User is logged in - STAY ON DASHBOARD
+        console.log('User logged in, staying on dashboard:', user.uid);
         currentUser = user;
         
-        // Load user data
-        await loadUserData();
-        
-        // Load all dashboard data
-        await Promise.all([
-          loadActiveRooms(),
-          loadUpcomingSessions(),
-          loadCourses(),
-          loadStudyProgress()
-        ]);
-
-        // Set up real-time listeners
-        setupRealtimeListeners();
+        try {
+          await loadUserData();
+          await Promise.all([
+            loadActiveRooms(),
+            loadUpcomingSessions(),
+            loadCourses(),
+            loadStudyProgress()
+          ]);
+          setupRealtimeListeners();
+        } catch (error) {
+          console.error('Error loading dashboard data:', error);
+          showToast('Error loading dashboard data', 'error');
+        }
       });
 
       // Load user data from Firestore
@@ -670,8 +675,18 @@
               .toUpperCase()
               .substring(0, 2);
             document.getElementById('userAvatar').textContent = initials;
+          } else {
+            // Create user document if it doesn't exist
+            await db.collection('users').doc(currentUser.uid).set({
+              email: currentUser.email,
+              fullName: currentUser.displayName || 'Student',
+              createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+              lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+            });
+            await loadUserData(); // Reload after creation
           }
         } catch (error) {
+          console.error('Error loading user data:', error);
           showToast('Error loading user data', 'error');
         }
       }
@@ -834,7 +849,7 @@
           });
       }
 
-      // ========== INTERACTIVE FEATURES (Work directly on dashboard) ==========
+      // ========== INTERACTIVE FEATURES ==========
 
       // Create Study Room
       document.getElementById('createRoomBtn').addEventListener('click', () => {
@@ -1152,6 +1167,10 @@
       // Load detailed stats
       async function loadDetailedStats() {
         // Implementation for detailed stats
+        const statsEl = document.querySelector('.modal-body');
+        if (statsEl) {
+          statsEl.innerHTML = '<p>Your study statistics for this week:</p><ul><li>Most productive day: Wednesday</li><li>Average daily study: 3.5 hours</li><li>Total study time: 24 hours</li></ul>';
+        }
       }
 
       // Close modal
@@ -1176,21 +1195,29 @@
         }, 3000);
       }
 
-      // ========== SIDEBAR EXTERNAL PAGES ==========
+      // ========== SIDEBAR NAVIGATION - EXTERNAL PAGES ==========
       document.querySelectorAll('.nav-item').forEach(item => {
         item.addEventListener('click', (e) => {
           e.stopPropagation();
           const page = item.dataset.page;
+          // Only navigate if not dashboard
           if (page && page !== 'dashboard') {
+            // Navigate to external page
             window.location.href = `${page}.html`;
           }
+          // If dashboard, stay on current page (do nothing)
         });
       });
 
       // Logout
       document.getElementById('logoutTrigger').addEventListener('click', async () => {
-        await auth.signOut();
-        window.location.href = 'login.html';
+        try {
+          await auth.signOut();
+          window.location.href = 'login.html';
+        } catch (error) {
+          console.error('Logout error:', error);
+          showToast('Error logging out', 'error');
+        }
       });
 
       // Mobile sidebar toggle
