@@ -5,11 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyHub · Whiteboard</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.15.0/dist/AgoraRTC_N-4.15.0.js"></script>
-    <script src="agora.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
@@ -205,6 +200,12 @@
             animation: pulse 1.5s infinite;
         }
         
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+        
         /* Chat Sidebar */
         .chat-sidebar {
             background: white;
@@ -269,6 +270,7 @@
             background: #f8fafd;
             border-radius: 16px;
             padding: 12px;
+            max-width: 80%;
         }
         
         .message.own {
@@ -371,6 +373,8 @@
         }
         
         .toast.show { transform: translateX(0); }
+        .toast.success { border-left: 4px solid #10b981; }
+        .toast.error { border-left: 4px solid #ef4444; }
         
         @media (max-width: 1200px) {
             .app-container { grid-template-columns: 240px 1fr 260px; }
@@ -392,10 +396,53 @@
             align-items: center;
             gap: 10px;
         }
+        
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #1a1c2c;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            transition: opacity 0.5s;
+        }
+        
+        .loading-spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid rgba(99, 102, 241, 0.2);
+            border-top-color: #6366f1;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            color: white;
+            text-align: center;
+        }
+        
+        .error-message i {
+            font-size: 48px;
+            color: #ef4444;
+            margin-bottom: 20px;
+        }
     </style>
 </head>
 <body>
-    <div class="app-container">
+    <!-- Loading Screen -->
+    <div class="loading-screen" id="loadingScreen">
+        <div class="loading-spinner"></div>
+    </div>
+    
+    <div class="app-container" style="display: none;" id="appContainer">
         <!-- Tools Sidebar -->
         <div class="tools-sidebar">
             <div class="room-info">
@@ -527,558 +574,562 @@
         <span id="toastMessage"></span>
     </div>
     
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <script src="firebase-config.js"></script>
+    
     <script>
-        // Initialize Firebase with error handling
-        if (typeof firebaseConfig === 'undefined') {
-            console.error('Firebase config not found');
-            // Don't redirect immediately, show error and then redirect
-            setTimeout(() => {
-                window.location.href = 'login.html';
-            }, 2000);
-        } else {
+        (function() {
+            // Show loading screen
+            const loadingScreen = document.getElementById('loadingScreen');
+            const appContainer = document.getElementById('appContainer');
+            
+            // Check Firebase config
+            if (typeof firebaseConfig === 'undefined') {
+                console.error('Firebase config not found');
+                loadingScreen.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h2>Configuration Error</h2>
+                        <p>Firebase configuration not found</p>
+                        <button onclick="window.location.href='login.html'" style="margin-top:20px; padding:10px 20px; background:#6366f1; color:white; border:none; border-radius:30px; cursor:pointer;">Go to Login</button>
+                    </div>
+                `;
+                return;
+            }
+            
+            // Initialize Firebase
             try {
                 firebase.initializeApp(firebaseConfig);
+                console.log('Firebase initialized successfully');
             } catch (error) {
                 console.error('Firebase init error:', error);
-            }
-        }
-        
-        const auth = firebase.auth();
-        const db = firebase.firestore();
-        
-        // Room state
-        let currentUser = null;
-        let roomId = null;
-        let roomData = null;
-        let isCreator = false;
-        let authChecked = false;
-        
-        // Whiteboard state
-        const canvas = document.getElementById('whiteboard');
-        const ctx = canvas.getContext('2d');
-        let drawing = false;
-        let currentTool = 'pen';
-        let currentColor = '#000000';
-        let currentShape = 'rectangle';
-        let lineWidth = 2;
-        let lastX = 0, lastY = 0;
-        let startX, startY;
-        
-        // Audio state
-        let agoraClient = null;
-        let localAudioTrack = null;
-        let isMicOn = false;
-        let isSpeakerOn = true;
-        let remoteUsers = new Map();
-        
-        // Resize canvas
-        function resizeCanvas() {
-            canvas.width = canvas.offsetWidth;
-            canvas.height = canvas.offsetHeight;
-            redrawCanvas();
-        }
-        
-        window.addEventListener('resize', resizeCanvas);
-        
-        // Auth check - STAY ON PAGE if logged in
-        auth.onAuthStateChanged(async (user) => {
-            if (!user) {
-                console.log('No user, redirecting to login');
-                window.location.href = 'login.html';
+                loadingScreen.innerHTML = `
+                    <div class="error-message">
+                        <i class="fas fa-exclamation-circle"></i>
+                        <h2>Firebase Error</h2>
+                        <p>${error.message}</p>
+                        <button onclick="window.location.href='login.html'" style="margin-top:20px; padding:10px 20px; background:#6366f1; color:white; border:none; border-radius:30px; cursor:pointer;">Go to Login</button>
+                    </div>
+                `;
                 return;
             }
             
-            // User is logged in - STAY ON PAGE
-            console.log('User logged in, staying on whiteboard page:', user.uid);
-            currentUser = user;
-            authChecked = true;
+            const auth = firebase.auth();
+            const db = firebase.firestore();
             
-            // Get room ID from URL
-            const urlParams = new URLSearchParams(window.location.search);
-            roomId = urlParams.get('room');
+            // Room state
+            let currentUser = null;
+            let roomId = null;
+            let roomData = null;
+            let isCreator = false;
             
-            if (!roomId) {
-                showToast('No room specified', 'error');
-                setTimeout(() => window.location.href = 'studyrooms.html', 2000);
-                return;
+            // Whiteboard state
+            const canvas = document.getElementById('whiteboard');
+            const ctx = canvas.getContext('2d');
+            let drawing = false;
+            let currentTool = 'pen';
+            let currentColor = '#000000';
+            let currentShape = 'rectangle';
+            let lineWidth = 2;
+            let startX, startY;
+            
+            // Audio state
+            let isMicOn = false;
+            let isSpeakerOn = true;
+            
+            // Resize canvas
+            function resizeCanvas() {
+                if (!canvas) return;
+                canvas.width = canvas.offsetWidth;
+                canvas.height = canvas.offsetHeight;
+                if (roomData) {
+                    redrawCanvas();
+                }
             }
             
-            try {
-                await loadRoomData();
-                await loadParticipants();
-                setupRealtimeWhiteboard();
-                setupRealtimeChat();
-                initAgora();
-                resizeCanvas();
-            } catch (error) {
-                console.error('Error loading room:', error);
-                showToast('Error loading room', 'error');
-            }
-        });
-        
-        // Load room data
-        async function loadRoomData() {
-            try {
-                const doc = await db.collection('activeRooms').doc(roomId).get();
+            window.addEventListener('resize', resizeCanvas);
+            
+            // Auth check - STAY ON PAGE if logged in
+            auth.onAuthStateChanged(async (user) => {
+                if (!user) {
+                    console.log('No user found, redirecting to login');
+                    window.location.href = 'login.html';
+                    return;
+                }
                 
-                if (!doc.exists) {
-                    showToast('Room not found', 'error');
+                // User is logged in - show app
+                console.log('User authenticated:', user.uid, user.email);
+                currentUser = user;
+                
+                // Hide loading screen and show app
+                loadingScreen.style.opacity = '0';
+                setTimeout(() => {
+                    loadingScreen.style.display = 'none';
+                    appContainer.style.display = 'grid';
+                }, 500);
+                
+                // Get room ID from URL
+                const urlParams = new URLSearchParams(window.location.search);
+                roomId = urlParams.get('room');
+                
+                if (!roomId) {
+                    showToast('No room specified', 'error');
                     setTimeout(() => window.location.href = 'studyrooms.html', 2000);
                     return;
                 }
                 
-                roomData = doc.data();
-                isCreator = roomData.createdBy === currentUser.uid;
-                
-                document.getElementById('roomTitle').textContent = roomData.title || 'Untitled Room';
-                document.getElementById('roomCourse').textContent = roomData.course || 'General';
-                
-                // Add user to participants if not already
-                if (!roomData.participants?.includes(currentUser.uid)) {
-                    await db.collection('activeRooms').doc(roomId).update({
-                        participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
-                    });
-                }
-            } catch (error) {
-                console.error('Error loading room:', error);
-                showToast('Error loading room', 'error');
-            }
-        }
-        
-        // Load participants
-        async function loadParticipants() {
-            try {
-                const doc = await db.collection('activeRooms').doc(roomId).get();
-                const participants = doc.data()?.participants || [];
-                
-                document.getElementById('participantCount').textContent = `${participants.length} participants`;
-                
-                // Load user details for avatars
-                const avatarsHtml = participants.slice(0, 5).map((uid, i) => {
-                    return `<div class="participant-avatar" style="background: hsl(${i * 40}, 70%, 60%);">${uid.substring(0, 2).toUpperCase()}</div>`;
-                }).join('');
-                
-                document.getElementById('participantAvatars').innerHTML = avatarsHtml;
-            } catch (error) {
-                console.error('Error loading participants:', error);
-            }
-        }
-        
-        // Setup real-time whiteboard
-        function setupRealtimeWhiteboard() {
-            db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
-                .orderBy('timestamp')
-                .onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            const stroke = change.doc.data();
-                            if (stroke.userId !== currentUser.uid) {
-                                drawRemoteStroke(stroke);
-                            }
-                        }
-                    });
-                });
-        }
-        
-        // Setup real-time chat
-        function setupRealtimeChat() {
-            db.collection('roomChat').doc(roomId).collection('messages')
-                .orderBy('timestamp')
-                .limit(50)
-                .onSnapshot((snapshot) => {
-                    snapshot.docChanges().forEach((change) => {
-                        if (change.type === 'added') {
-                            displayMessage(change.doc.data());
-                        }
-                    });
-                });
-        }
-        
-        // Initialize Agora
-        async function initAgora() {
-            try {
-                agoraClient = initAgoraClient();
-                
-                // Set client role based on user
-                await agoraClient.setClientRole(isCreator ? 'host' : 'audience');
-                
-                // Join channel
-                const token = await generateAgoraToken(roomId, currentUser.uid);
-                await joinAgoraChannel(agoraClient, roomId, token, currentUser.uid);
-                
-                // Setup listeners
-                setupAgoraListeners(
-                    agoraClient,
-                    (user) => {
-                        showToast(`${user.uid} joined audio`, 'success');
-                        updateSpeakerIndicator();
-                    },
-                    (user) => {
-                        showToast(`${user.uid} left audio`, 'success');
-                        remoteUsers.delete(user.uid);
-                        updateSpeakerIndicator();
-                    }
-                );
-                
-                showToast('Connected to audio channel', 'success');
-            } catch (error) {
-                console.error('Agora init error:', error);
-                showToast('Audio connection failed', 'error');
-            }
-        }
-        
-        // Toggle microphone
-        window.toggleMicrophone = async function() {
-            if (!agoraClient) return;
-            
-            try {
-                if (!isMicOn) {
-                    localAudioTrack = await createLocalAudioTrack();
-                    await publishAudio(agoraClient, localAudioTrack);
-                    
-                    // Monitor audio level
-                    localAudioTrack.on('volume-indicator', (volumes) => {
-                        if (volumes[0].volume > 10) {
-                            document.getElementById('micBtn').classList.add('speaking');
-                        } else {
-                            document.getElementById('micBtn').classList.remove('speaking');
-                        }
-                    });
-                    
-                    document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
-                    isMicOn = true;
-                } else {
-                    await localAudioTrack.close();
-                    document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone"></i> Mic';
-                    isMicOn = false;
-                }
-            } catch (error) {
-                showToast('Error toggling microphone', 'error');
-            }
-        };
-        
-        // Toggle speaker
-        window.toggleSpeaker = function() {
-            isSpeakerOn = !isSpeakerOn;
-            document.getElementById('speakerBtn').innerHTML = isSpeakerOn ? 
-                '<i class="fas fa-volume-up"></i> Speaker' : 
-                '<i class="fas fa-volume-mute"></i> Muted';
-            
-            // Mute/unmute all remote audio
-            remoteUsers.forEach(user => {
-                if (user.audioTrack) {
-                    isSpeakerOn ? user.audioTrack.play() : user.audioTrack.stop();
+                try {
+                    await loadRoomData();
+                    await loadParticipants();
+                    setupRealtimeWhiteboard();
+                    setupRealtimeChat();
+                    resizeCanvas();
+                } catch (error) {
+                    console.error('Error loading room:', error);
+                    showToast('Error loading room data', 'error');
                 }
             });
-        };
-        
-        // Update speaker indicator
-        function updateSpeakerIndicator() {
-            const speakingUsers = remoteUsers.size;
-            document.getElementById('speakerIndicator').textContent = 
-                speakingUsers > 0 ? `${speakingUsers} speaking` : 'No one speaking';
-        }
-        
-        // Drawing functions
-        function startDrawing(e) {
-            drawing = true;
-            const pos = getCanvasCoordinates(e);
-            startX = pos.x;
-            startY = pos.y;
             
-            if (currentTool === 'pen') {
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
+            // Load room data
+            async function loadRoomData() {
+                try {
+                    const doc = await db.collection('activeRooms').doc(roomId).get();
+                    
+                    if (!doc.exists) {
+                        showToast('Room not found', 'error');
+                        setTimeout(() => window.location.href = 'studyrooms.html', 2000);
+                        return;
+                    }
+                    
+                    roomData = doc.data();
+                    isCreator = roomData.createdBy === currentUser.uid;
+                    
+                    document.getElementById('roomTitle').textContent = roomData.title || 'Untitled Room';
+                    document.getElementById('roomCourse').textContent = roomData.course || 'General';
+                    
+                    // Add user to participants if not already
+                    if (!roomData.participants?.includes(currentUser.uid)) {
+                        await db.collection('activeRooms').doc(roomId).update({
+                            participants: firebase.firestore.FieldValue.arrayUnion(currentUser.uid)
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error loading room:', error);
+                    showToast('Error loading room', 'error');
+                }
             }
-        }
-        
-        function draw(e) {
-            if (!drawing) return;
             
-            const pos = getCanvasCoordinates(e);
+            // Load participants
+            async function loadParticipants() {
+                try {
+                    const doc = await db.collection('activeRooms').doc(roomId).get();
+                    const participants = doc.data()?.participants || [];
+                    
+                    document.getElementById('participantCount').textContent = `${participants.length} participants`;
+                    
+                    // Create avatars
+                    const avatarsHtml = participants.slice(0, 5).map((uid, i) => {
+                        const colors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+                        return `<div class="participant-avatar" style="background: ${colors[i % colors.length]};">${uid.substring(0, 2).toUpperCase()}</div>`;
+                    }).join('');
+                    
+                    document.getElementById('participantAvatars').innerHTML = avatarsHtml;
+                } catch (error) {
+                    console.error('Error loading participants:', error);
+                }
+            }
             
-            if (currentTool === 'pen') {
+            // Setup real-time whiteboard
+            function setupRealtimeWhiteboard() {
+                db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                    .orderBy('timestamp')
+                    .onSnapshot((snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added') {
+                                const stroke = change.doc.data();
+                                if (stroke.userId !== currentUser.uid) {
+                                    drawRemoteStroke(stroke);
+                                }
+                            }
+                        });
+                    });
+            }
+            
+            // Setup real-time chat
+            function setupRealtimeChat() {
+                db.collection('roomChat').doc(roomId).collection('messages')
+                    .orderBy('timestamp')
+                    .limit(50)
+                    .onSnapshot((snapshot) => {
+                        snapshot.docChanges().forEach((change) => {
+                            if (change.type === 'added') {
+                                displayMessage(change.doc.data());
+                            }
+                        });
+                    });
+            }
+            
+            // Drawing functions
+            function startDrawing(e) {
+                e.preventDefault();
+                drawing = true;
+                const pos = getCanvasCoordinates(e);
+                startX = pos.x;
+                startY = pos.y;
+                
+                if (currentTool === 'pen') {
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y);
+                }
+            }
+            
+            function draw(e) {
+                e.preventDefault();
+                if (!drawing) return;
+                
+                const pos = getCanvasCoordinates(e);
+                
+                if (currentTool === 'pen') {
+                    ctx.strokeStyle = currentColor;
+                    ctx.lineWidth = lineWidth;
+                    ctx.lineTo(pos.x, pos.y);
+                    ctx.stroke();
+                    ctx.beginPath();
+                    ctx.moveTo(pos.x, pos.y);
+                    
+                    // Send stroke to Firebase
+                    saveStroke({
+                        type: 'pen',
+                        x: pos.x,
+                        y: pos.y,
+                        color: currentColor,
+                        width: lineWidth,
+                        timestamp: Date.now()
+                    });
+                }
+            }
+            
+            function stopDrawing(e) {
+                e.preventDefault();
+                if (drawing && currentTool === 'shape' && startX && startY) {
+                    const pos = getCanvasCoordinates(e);
+                    drawShape(startX, startY, pos.x, pos.y);
+                }
+                drawing = false;
+            }
+            
+            function drawShape(x1, y1, x2, y2) {
                 ctx.strokeStyle = currentColor;
                 ctx.lineWidth = lineWidth;
-                ctx.lineTo(pos.x, pos.y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(pos.x, pos.y);
                 
-                // Send stroke to Firebase
+                switch(currentShape) {
+                    case 'rectangle':
+                        ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
+                        break;
+                    case 'circle':
+                        const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+                        ctx.beginPath();
+                        ctx.arc(x1, y1, radius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                        break;
+                    case 'line':
+                        ctx.beginPath();
+                        ctx.moveTo(x1, y1);
+                        ctx.lineTo(x2, y2);
+                        ctx.stroke();
+                        break;
+                }
+                
+                // Save shape
                 saveStroke({
-                    type: 'pen',
-                    x: pos.x,
-                    y: pos.y,
+                    type: 'shape',
+                    shape: currentShape,
+                    x1: x1,
+                    y1: y1,
+                    x2: x2,
+                    y2: y2,
                     color: currentColor,
                     width: lineWidth,
                     timestamp: Date.now()
                 });
             }
-        }
-        
-        function stopDrawing() {
-            if (drawing && currentTool === 'shape' && startX && startY) {
-                const pos = getCanvasCoordinates(event);
-                drawShape(startX, startY, pos.x, pos.y);
-            }
-            drawing = false;
-        }
-        
-        function drawShape(x1, y1, x2, y2) {
-            ctx.strokeStyle = currentColor;
-            ctx.lineWidth = lineWidth;
             
-            switch(currentShape) {
-                case 'rectangle':
-                    ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-                    break;
-                case 'circle':
-                    const radius = Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
-                    ctx.beginPath();
-                    ctx.arc(x1, y1, radius, 0, 2 * Math.PI);
+            // Save stroke to Firebase
+            async function saveStroke(strokeData) {
+                try {
+                    await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').add({
+                        ...strokeData,
+                        userId: currentUser.uid,
+                        roomId: roomId
+                    });
+                } catch (error) {
+                    console.error('Error saving stroke:', error);
+                }
+            }
+            
+            // Draw remote stroke
+            function drawRemoteStroke(stroke) {
+                if (stroke.type === 'pen') {
+                    ctx.strokeStyle = stroke.color;
+                    ctx.lineWidth = stroke.width;
+                    ctx.lineTo(stroke.x, stroke.y);
                     ctx.stroke();
-                    break;
-                case 'line':
                     ctx.beginPath();
-                    ctx.moveTo(x1, y1);
-                    ctx.lineTo(x2, y2);
-                    ctx.stroke();
-                    break;
+                    ctx.moveTo(stroke.x, stroke.y);
+                } else if (stroke.type === 'shape') {
+                    ctx.strokeStyle = stroke.color;
+                    ctx.lineWidth = stroke.width;
+                    if (stroke.shape === 'rectangle') {
+                        ctx.strokeRect(stroke.x1, stroke.y1, stroke.x2 - stroke.x1, stroke.y2 - stroke.y1);
+                    } else if (stroke.shape === 'circle') {
+                        const radius = Math.sqrt(Math.pow(stroke.x2 - stroke.x1, 2) + Math.pow(stroke.y2 - stroke.y1, 2));
+                        ctx.beginPath();
+                        ctx.arc(stroke.x1, stroke.y1, radius, 0, 2 * Math.PI);
+                        ctx.stroke();
+                    } else if (stroke.shape === 'line') {
+                        ctx.beginPath();
+                        ctx.moveTo(stroke.x1, stroke.y1);
+                        ctx.lineTo(stroke.x2, stroke.y2);
+                        ctx.stroke();
+                    }
+                }
             }
             
-            // Save shape
-            saveStroke({
-                type: 'shape',
-                shape: currentShape,
-                x1: x1,
-                y1: y1,
-                x2: x2,
-                y2: y2,
-                color: currentColor,
-                width: lineWidth,
-                timestamp: Date.now()
-            });
-        }
-        
-        // Save stroke to Firebase
-        async function saveStroke(strokeData) {
-            try {
-                await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').add({
-                    ...strokeData,
-                    userId: currentUser.uid,
-                    roomId: roomId
-                });
-            } catch (error) {
-                console.error('Error saving stroke:', error);
-            }
-        }
-        
-        // Draw remote stroke
-        function drawRemoteStroke(stroke) {
-            if (stroke.type === 'pen') {
-                ctx.strokeStyle = stroke.color;
-                ctx.lineWidth = stroke.width;
-                ctx.lineTo(stroke.x, stroke.y);
-                ctx.stroke();
-                ctx.beginPath();
-                ctx.moveTo(stroke.x, stroke.y);
-            } else if (stroke.type === 'shape') {
-                ctx.strokeStyle = stroke.color;
-                ctx.lineWidth = stroke.width;
-                drawShape(stroke.x1, stroke.y1, stroke.x2, stroke.y2);
-            }
-        }
-        
-        // Get canvas coordinates
-        function getCanvasCoordinates(e) {
-            const rect = canvas.getBoundingClientRect();
-            const scaleX = canvas.width / rect.width;
-            const scaleY = canvas.height / rect.height;
-            
-            let x, y;
-            if (e.touches) {
-                x = (e.touches[0].clientX - rect.left) * scaleX;
-                y = (e.touches[0].clientY - rect.top) * scaleY;
-            } else {
-                x = (e.clientX - rect.left) * scaleX;
-                y = (e.clientY - rect.top) * scaleY;
-            }
-            
-            return { x, y };
-        }
-        
-        // Tool functions
-        window.setTool = function(tool) {
-            currentTool = tool;
-            document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`).classList.add('active');
-        };
-        
-        window.setColor = function(color) {
-            currentColor = color;
-            document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-            event.target.classList.add('selected');
-        };
-        
-        window.setShape = function(shape) {
-            currentShape = shape;
-            setTool('shape');
-        };
-        
-        window.insertMathSymbol = function(symbol) {
-            setTool('text');
-            // Insert symbol at cursor position
-            saveStroke({
-                type: 'text',
-                text: symbol,
-                x: lastX,
-                y: lastY,
-                color: currentColor,
-                timestamp: Date.now()
-            });
-        };
-        
-        // Clear canvas
-        window.clearCanvas = async function() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            // Clear Firebase strokes
-            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
-            strokes.docs.forEach(doc => doc.ref.delete());
-        };
-        
-        // Redraw canvas
-        async function redrawCanvas() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            
-            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
-                .orderBy('timestamp')
-                .get();
-            
-            strokes.forEach(doc => drawRemoteStroke(doc.data()));
-        }
-        
-        // Take screenshot
-        window.takeScreenshot = function() {
-            const dataURL = canvas.toDataURL('image/png');
-            document.getElementById('screenshotPreview').src = dataURL;
-            document.getElementById('screenshotModal').classList.add('show');
-        };
-        
-        window.closeScreenshotModal = function() {
-            document.getElementById('screenshotModal').classList.remove('show');
-        };
-        
-        window.downloadScreenshot = function() {
-            const dataURL = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `whiteboard-${roomId}-${Date.now()}.png`;
-            link.href = dataURL;
-            link.click();
-        };
-        
-        // Download canvas
-        window.downloadCanvas = function() {
-            const dataURL = canvas.toDataURL('image/png');
-            const link = document.createElement('a');
-            link.download = `whiteboard-${roomId}-${Date.now()}.png`;
-            link.href = dataURL;
-            link.click();
-        };
-        
-        // Toggle grid
-        window.toggleGrid = function() {
-            // Implement grid overlay
-        };
-        
-        // Chat functions
-        window.sendChatMessage = async function() {
-            const input = document.getElementById('chatInput');
-            const text = input.value.trim();
-            
-            if (!text) return;
-            
-            try {
-                await db.collection('roomChat').doc(roomId).collection('messages').add({
-                    userId: currentUser.uid,
-                    userName: currentUser.displayName || 'Student',
-                    text: text,
-                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
-                });
+            // Get canvas coordinates
+            function getCanvasCoordinates(e) {
+                const rect = canvas.getBoundingClientRect();
+                const scaleX = canvas.width / rect.width;
+                const scaleY = canvas.height / rect.height;
                 
-                input.value = '';
-            } catch (error) {
-                showToast('Error sending message', 'error');
-            }
-        };
-        
-        window.handleChatKeyPress = function(e) {
-            if (e.key === 'Enter') {
-                sendChatMessage();
-            }
-        };
-        
-        function displayMessage(message) {
-            const messagesEl = document.getElementById('chatMessages');
-            const isOwn = message.userId === currentUser.uid;
-            
-            const messageEl = document.createElement('div');
-            messageEl.className = `message ${isOwn ? 'own' : ''}`;
-            messageEl.innerHTML = `
-                <div class="message-sender">${message.userName}</div>
-                <div class="message-text">${message.text}</div>
-            `;
-            
-            messagesEl.appendChild(messageEl);
-            messagesEl.scrollTop = messagesEl.scrollHeight;
-        }
-        
-        // Leave room
-        window.leaveRoom = async function() {
-            try {
-                // Remove user from participants
-                await db.collection('activeRooms').doc(roomId).update({
-                    participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
-                });
-                
-                // Leave Agora channel
-                if (agoraClient) {
-                    await leaveAgoraChannel(agoraClient);
+                let x, y;
+                if (e.touches) {
+                    x = (e.touches[0].clientX - rect.left) * scaleX;
+                    y = (e.touches[0].clientY - rect.top) * scaleY;
+                } else {
+                    x = (e.clientX - rect.left) * scaleX;
+                    y = (e.clientY - rect.top) * scaleY;
                 }
                 
-                window.location.href = 'studyrooms.html';
-            } catch (error) {
-                window.location.href = 'studyrooms.html';
+                return { x, y };
             }
-        };
-        
-        // Toast
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            const toastIcon = document.getElementById('toastIcon');
-            const toastMessage = document.getElementById('toastMessage');
             
-            toast.className = `toast ${type}`;
-            toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
-            toastMessage.textContent = message;
+            // Tool functions
+            window.setTool = function(tool) {
+                currentTool = tool;
+                document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+                const toolBtn = document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`);
+                if (toolBtn) toolBtn.classList.add('active');
+            };
             
-            toast.classList.add('show');
-            setTimeout(() => toast.classList.remove('show'), 3000);
-        }
-        
-        // Event listeners
-        canvas.addEventListener('mousedown', startDrawing);
-        canvas.addEventListener('mousemove', draw);
-        canvas.addEventListener('mouseup', stopDrawing);
-        canvas.addEventListener('mouseleave', stopDrawing);
-        
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
-        
-        // Expose functions globally
-        window.showToast = showToast;
+            window.setColor = function(color) {
+                currentColor = color;
+                document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
+                event.target.classList.add('selected');
+            };
+            
+            window.setShape = function(shape) {
+                currentShape = shape;
+                setTool('shape');
+            };
+            
+            window.insertMathSymbol = function(symbol) {
+                // Insert symbol at center of visible area
+                const centerX = canvas.width / 2;
+                const centerY = canvas.height / 2;
+                
+                ctx.font = '24px Arial';
+                ctx.fillStyle = currentColor;
+                ctx.fillText(symbol, centerX, centerY);
+                
+                saveStroke({
+                    type: 'text',
+                    text: symbol,
+                    x: centerX,
+                    y: centerY,
+                    color: currentColor,
+                    timestamp: Date.now()
+                });
+            };
+            
+            // Clear canvas
+            window.clearCanvas = async function() {
+                if (!confirm('Clear the entire whiteboard?')) return;
+                
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                // Clear Firebase strokes
+                try {
+                    const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
+                    const batch = db.batch();
+                    strokes.docs.forEach(doc => batch.delete(doc.ref));
+                    await batch.commit();
+                    showToast('Canvas cleared', 'success');
+                } catch (error) {
+                    console.error('Error clearing canvas:', error);
+                    showToast('Error clearing canvas', 'error');
+                }
+            };
+            
+            // Redraw canvas
+            async function redrawCanvas() {
+                try {
+                    const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                        .orderBy('timestamp')
+                        .get();
+                    
+                    strokes.forEach(doc => drawRemoteStroke(doc.data()));
+                } catch (error) {
+                    console.error('Error redrawing canvas:', error);
+                }
+            }
+            
+            // Take screenshot
+            window.takeScreenshot = function() {
+                const dataURL = canvas.toDataURL('image/png');
+                document.getElementById('screenshotPreview').src = dataURL;
+                document.getElementById('screenshotModal').classList.add('show');
+            };
+            
+            window.closeScreenshotModal = function() {
+                document.getElementById('screenshotModal').classList.remove('show');
+            };
+            
+            window.downloadScreenshot = function() {
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `whiteboard-${roomId}-${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+                closeScreenshotModal();
+            };
+            
+            // Download canvas
+            window.downloadCanvas = function() {
+                const dataURL = canvas.toDataURL('image/png');
+                const link = document.createElement('a');
+                link.download = `whiteboard-${roomId}-${Date.now()}.png`;
+                link.href = dataURL;
+                link.click();
+                showToast('Canvas downloaded', 'success');
+            };
+            
+            // Toggle grid (placeholder)
+            window.toggleGrid = function() {
+                showToast('Grid feature coming soon', 'success');
+            };
+            
+            // Toggle microphone (placeholder)
+            window.toggleMicrophone = function() {
+                isMicOn = !isMicOn;
+                const micBtn = document.getElementById('micBtn');
+                micBtn.innerHTML = isMicOn ? 
+                    '<i class="fas fa-microphone-slash"></i> Mute' : 
+                    '<i class="fas fa-microphone"></i> Mic';
+                micBtn.classList.toggle('active', isMicOn);
+                showToast(isMicOn ? 'Microphone enabled' : 'Microphone disabled', 'success');
+            };
+            
+            // Toggle speaker (placeholder)
+            window.toggleSpeaker = function() {
+                isSpeakerOn = !isSpeakerOn;
+                const speakerBtn = document.getElementById('speakerBtn');
+                speakerBtn.innerHTML = isSpeakerOn ? 
+                    '<i class="fas fa-volume-up"></i> Speaker' : 
+                    '<i class="fas fa-volume-mute"></i> Muted';
+                speakerBtn.classList.toggle('active', isSpeakerOn);
+                showToast(isSpeakerOn ? 'Speaker enabled' : 'Speaker muted', 'success');
+            };
+            
+            // Chat functions
+            window.sendChatMessage = async function() {
+                const input = document.getElementById('chatInput');
+                const text = input.value.trim();
+                
+                if (!text) return;
+                
+                try {
+                    await db.collection('roomChat').doc(roomId).collection('messages').add({
+                        userId: currentUser.uid,
+                        userName: currentUser.displayName || currentUser.email?.split('@')[0] || 'Student',
+                        text: text,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    input.value = '';
+                } catch (error) {
+                    console.error('Error sending message:', error);
+                    showToast('Error sending message', 'error');
+                }
+            };
+            
+            window.handleChatKeyPress = function(e) {
+                if (e.key === 'Enter') {
+                    sendChatMessage();
+                }
+            };
+            
+            function displayMessage(message) {
+                const messagesEl = document.getElementById('chatMessages');
+                const isOwn = message.userId === currentUser.uid;
+                
+                const messageEl = document.createElement('div');
+                messageEl.className = `message ${isOwn ? 'own' : ''}`;
+                messageEl.innerHTML = `
+                    <div class="message-sender">${message.userName || 'Student'}</div>
+                    <div class="message-text">${message.text}</div>
+                `;
+                
+                messagesEl.appendChild(messageEl);
+                messagesEl.scrollTop = messagesEl.scrollHeight;
+            }
+            
+            // Leave room
+            window.leaveRoom = async function() {
+                try {
+                    // Remove user from participants
+                    if (currentUser && roomId) {
+                        await db.collection('activeRooms').doc(roomId).update({
+                            participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+                        });
+                    }
+                } catch (error) {
+                    console.error('Error leaving room:', error);
+                } finally {
+                    window.location.href = 'studyrooms.html';
+                }
+            };
+            
+            // Toast
+            function showToast(message, type = 'success') {
+                const toast = document.getElementById('toast');
+                const toastIcon = document.getElementById('toastIcon');
+                const toastMessage = document.getElementById('toastMessage');
+                
+                toast.className = `toast ${type}`;
+                toastIcon.className = `fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}`;
+                toastMessage.textContent = message;
+                
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            }
+            
+            // Event listeners
+            canvas.addEventListener('mousedown', startDrawing);
+            canvas.addEventListener('mousemove', draw);
+            canvas.addEventListener('mouseup', stopDrawing);
+            canvas.addEventListener('mouseleave', stopDrawing);
+            
+            canvas.addEventListener('touchstart', startDrawing);
+            canvas.addEventListener('touchmove', draw);
+            canvas.addEventListener('touchend', stopDrawing);
+            canvas.addEventListener('touchcancel', stopDrawing);
+            
+            // Expose functions
+            window.showToast = showToast;
+        })();
     </script>
 </body>
 </html>
