@@ -9,7 +9,6 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.15.0/dist/AgoraRTC_N-4.15.0.js"></script>
-    <script src="agora.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
@@ -406,62 +405,62 @@
             <div class="tool-section">
                 <h4>Drawing Tools</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn active" id="toolPen" onclick="setTool('pen')"><i class="fas fa-pen"></i></div>
-                    <div class="tool-btn" id="toolEraser" onclick="setTool('eraser')"><i class="fas fa-eraser"></i></div>
-                    <div class="tool-btn" id="toolText" onclick="setTool('text')"><i class="fas fa-font"></i></div>
-                    <div class="tool-btn" id="toolShape" onclick="setTool('shape')"><i class="fas fa-shapes"></i></div>
+                    <div class="tool-btn active" id="toolPen" onclick="window.setTool('pen')"><i class="fas fa-pen"></i></div>
+                    <div class="tool-btn" id="toolEraser" onclick="window.setTool('eraser')"><i class="fas fa-eraser"></i></div>
+                    <div class="tool-btn" id="toolText" onclick="window.setTool('text')"><i class="fas fa-font"></i></div>
+                    <div class="tool-btn" id="toolShape" onclick="window.setTool('shape')"><i class="fas fa-shapes"></i></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Colors</h4>
                 <div class="color-picker">
-                    <div class="color-option selected" style="background: #000000;" onclick="setColor('#000000')"></div>
-                    <div class="color-option" style="background: #6366f1;" onclick="setColor('#6366f1')"></div>
-                    <div class="color-option" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
-                    <div class="color-option" style="background: #10b981;" onclick="setColor('#10b981')"></div>
-                    <div class="color-option" style="background: #f59e0b;" onclick="setColor('#f59e0b')"></div>
-                    <div class="color-option" style="background: #8b5cf6;" onclick="setColor('#8b5cf6')"></div>
-                    <div class="color-option" style="background: #ec4899;" onclick="setColor('#ec4899')"></div>
-                    <div class="color-option" style="background: #ffffff; border: 2px solid #e2e8f0;" onclick="setColor('#ffffff')"></div>
+                    <div class="color-option selected" style="background: #000000;" onclick="window.setColor('#000000', this)"></div>
+                    <div class="color-option" style="background: #6366f1;" onclick="window.setColor('#6366f1', this)"></div>
+                    <div class="color-option" style="background: #ef4444;" onclick="window.setColor('#ef4444', this)"></div>
+                    <div class="color-option" style="background: #10b981;" onclick="window.setColor('#10b981', this)"></div>
+                    <div class="color-option" style="background: #f59e0b;" onclick="window.setColor('#f59e0b', this)"></div>
+                    <div class="color-option" style="background: #8b5cf6;" onclick="window.setColor('#8b5cf6', this)"></div>
+                    <div class="color-option" style="background: #ec4899;" onclick="window.setColor('#ec4899', this)"></div>
+                    <div class="color-option" style="background: #ffffff; border: 2px solid #e2e8f0;" onclick="window.setColor('#ffffff', this)"></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Shapes</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn" onclick="setShape('rectangle')"><i class="far fa-square"></i></div>
-                    <div class="tool-btn" onclick="setShape('circle')"><i class="far fa-circle"></i></div>
-                    <div class="tool-btn" onclick="setShape('line')"><i class="fas fa-slash"></i></div>
-                    <div class="tool-btn" onclick="setShape('arrow')"><i class="fas fa-arrow-right"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('rectangle')"><i class="far fa-square"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('circle')"><i class="far fa-circle"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('line')"><i class="fas fa-slash"></i></div>
+                    <div class="tool-btn" onclick="window.setShape('arrow')"><i class="fas fa-arrow-right"></i></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Math Symbols</h4>
                 <div class="math-symbols">
-                    <div class="math-btn" onclick="insertMathSymbol('∫')">∫</div>
-                    <div class="math-btn" onclick="insertMathSymbol('∑')">∑</div>
-                    <div class="math-btn" onclick="insertMathSymbol('√')">√</div>
-                    <div class="math-btn" onclick="insertMathSymbol('π')">π</div>
-                    <div class="math-btn" onclick="insertMathSymbol('∞')">∞</div>
-                    <div class="math-btn" onclick="insertMathSymbol('θ')">θ</div>
-                    <div class="math-btn" onclick="insertMathSymbol('α')">α</div>
-                    <div class="math-btn" onclick="insertMathSymbol('β')">β</div>
-                    <div class="math-btn" onclick="insertMathSymbol('γ')">γ</div>
-                    <div class="math-btn" onclick="insertMathSymbol('Δ')">Δ</div>
-                    <div class="math-btn" onclick="insertMathSymbol('∂')">∂</div>
-                    <div class="math-btn" onclick="insertMathSymbol('∇')">∇</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∫')">∫</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∑')">∑</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('√')">√</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('π')">π</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∞')">∞</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('θ')">θ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('α')">α</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('β')">β</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('γ')">γ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('Δ')">Δ</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∂')">∂</div>
+                    <div class="math-btn" onclick="window.insertMathSymbol('∇')">∇</div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Actions</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn" onclick="clearCanvas()"><i class="fas fa-trash"></i></div>
-                    <div class="tool-btn" onclick="takeScreenshot()"><i class="fas fa-camera"></i></div>
-                    <div class="tool-btn" onclick="downloadCanvas()"><i class="fas fa-download"></i></div>
-                    <div class="tool-btn" onclick="toggleGrid()"><i class="fas fa-border-all"></i></div>
+                    <div class="tool-btn" onclick="window.clearCanvas()"><i class="fas fa-trash"></i></div>
+                    <div class="tool-btn" onclick="window.takeScreenshot()"><i class="fas fa-camera"></i></div>
+                    <div class="tool-btn" onclick="window.downloadCanvas()"><i class="fas fa-download"></i></div>
+                    <div class="tool-btn" onclick="window.toggleGrid()"><i class="fas fa-border-all"></i></div>
                 </div>
             </div>
         </div>
@@ -484,10 +483,10 @@
             <div class="chat-header">
                 <h3><i class="fas fa-comments"></i> Live Chat</h3>
                 <div class="audio-controls">
-                    <button class="audio-btn" id="micBtn" onclick="toggleMicrophone()">
+                    <button class="audio-btn" id="micBtn" onclick="window.toggleMicrophone()">
                         <i class="fas fa-microphone"></i> Mic
                     </button>
-                    <button class="audio-btn" id="speakerBtn" onclick="toggleSpeaker()">
+                    <button class="audio-btn" id="speakerBtn" onclick="window.toggleSpeaker()">
                         <i class="fas fa-volume-up"></i> Speaker
                     </button>
                 </div>
@@ -499,13 +498,13 @@
             <div class="chat-messages" id="chatMessages"></div>
             
             <div class="chat-input-area">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Type a question..." onkeypress="handleChatKeyPress(event)">
-                <button class="send-btn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a question..." onkeypress="window.handleChatKeyPress(event)">
+                <button class="send-btn" onclick="window.sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
     
-    <button class="back-to-rooms" onclick="leaveRoom()">
+    <button class="back-to-rooms" onclick="window.leaveRoom()">
         <i class="fas fa-arrow-left"></i> Back to Rooms
     </button>
     
@@ -515,8 +514,8 @@
             <h2 style="margin-bottom: 20px;">Screenshot Captured</h2>
             <img id="screenshotPreview" class="screenshot-preview" src="" alt="Screenshot">
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="audio-btn" onclick="closeScreenshotModal()">Close</button>
-                <button class="audio-btn" style="background: #6366f1; color: white;" onclick="downloadScreenshot()">Download</button>
+                <button class="audio-btn" onclick="window.closeScreenshotModal()">Close</button>
+                <button class="audio-btn" style="background: #6366f1; color: white;" onclick="window.downloadScreenshot()">Download</button>
             </div>
         </div>
     </div>
@@ -528,11 +527,13 @@
     </div>
     
     <script>
-        // Initialize Firebase
+        // Make sure firebase-config.js exists
         if (typeof firebaseConfig === 'undefined') {
+            console.error('Firebase config not found');
             window.location.href = 'login.html';
         }
         
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
@@ -677,28 +678,45 @@
         // Initialize Agora
         async function initAgora() {
             try {
-                agoraClient = initAgoraClient();
+                // Check if Agora is available
+                if (typeof AgoraRTC === 'undefined') {
+                    console.error('AgoraRTC not loaded');
+                    return;
+                }
+                
+                agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
                 
                 // Set client role based on user
                 await agoraClient.setClientRole(isCreator ? 'host' : 'audience');
                 
-                // Join channel
-                const token = await generateAgoraToken(roomId, currentUser.uid);
-                await joinAgoraChannel(agoraClient, roomId, token, currentUser.uid);
+                // Join channel with dummy token (in production, get from server)
+                const appId = 'YOUR_AGORA_APP_ID'; // Replace with your Agora app ID
+                const token = null; // In production, generate token
+                
+                await agoraClient.join(appId, roomId, token, currentUser.uid);
                 
                 // Setup listeners
-                setupAgoraListeners(
-                    agoraClient,
-                    (user) => {
-                        showToast(`${user.uid} joined audio`, 'success');
-                        updateSpeakerIndicator();
-                    },
-                    (user) => {
-                        showToast(`${user.uid} left audio`, 'success');
-                        remoteUsers.delete(user.uid);
+                agoraClient.on('user-published', async (user, mediaType) => {
+                    await agoraClient.subscribe(user, mediaType);
+                    
+                    if (mediaType === 'audio') {
+                        remoteUsers.set(user.uid, user);
+                        if (isSpeakerOn) {
+                            user.audioTrack.play();
+                        }
                         updateSpeakerIndicator();
                     }
-                );
+                });
+                
+                agoraClient.on('user-unpublished', (user) => {
+                    remoteUsers.delete(user.uid);
+                    updateSpeakerIndicator();
+                });
+                
+                agoraClient.on('user-left', (user) => {
+                    remoteUsers.delete(user.uid);
+                    updateSpeakerIndicator();
+                });
                 
                 showToast('Connected to audio channel', 'success');
             } catch (error) {
@@ -713,12 +731,12 @@
             
             try {
                 if (!isMicOn) {
-                    localAudioTrack = await createLocalAudioTrack();
-                    await publishAudio(agoraClient, localAudioTrack);
+                    localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
+                    await agoraClient.publish(localAudioTrack);
                     
                     // Monitor audio level
-                    localAudioTrack.on('volume-indicator', (volumes) => {
-                        if (volumes[0].volume > 10) {
+                    localAudioTrack.on('volume-indicator', (volume) => {
+                        if (volume > 10) {
                             document.getElementById('micBtn').classList.add('speaking');
                         } else {
                             document.getElementById('micBtn').classList.remove('speaking');
@@ -761,10 +779,13 @@
         
         // Drawing functions
         function startDrawing(e) {
+            e.preventDefault();
             drawing = true;
             const pos = getCanvasCoordinates(e);
             startX = pos.x;
             startY = pos.y;
+            lastX = pos.x;
+            lastY = pos.y;
             
             if (currentTool === 'pen') {
                 ctx.beginPath();
@@ -773,6 +794,7 @@
         }
         
         function draw(e) {
+            e.preventDefault();
             if (!drawing) return;
             
             const pos = getCanvasCoordinates(e);
@@ -794,12 +816,16 @@
                     width: lineWidth,
                     timestamp: Date.now()
                 });
+                
+                lastX = pos.x;
+                lastY = pos.y;
             }
         }
         
-        function stopDrawing() {
+        function stopDrawing(e) {
+            e.preventDefault();
             if (drawing && currentTool === 'shape' && startX && startY) {
-                const pos = getCanvasCoordinates(event);
+                const pos = getCanvasCoordinates(e);
                 drawShape(startX, startY, pos.x, pos.y);
             }
             drawing = false;
@@ -859,10 +885,10 @@
             if (stroke.type === 'pen') {
                 ctx.strokeStyle = stroke.color;
                 ctx.lineWidth = stroke.width;
-                ctx.lineTo(stroke.x, stroke.y);
-                ctx.stroke();
                 ctx.beginPath();
                 ctx.moveTo(stroke.x, stroke.y);
+                ctx.lineTo(stroke.x + 1, stroke.y + 1);
+                ctx.stroke();
             } else if (stroke.type === 'shape') {
                 ctx.strokeStyle = stroke.color;
                 ctx.lineWidth = stroke.width;
@@ -876,16 +902,24 @@
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             
-            let x, y;
+            let clientX, clientY;
+            
             if (e.touches) {
-                x = (e.touches[0].clientX - rect.left) * scaleX;
-                y = (e.touches[0].clientY - rect.top) * scaleY;
+                clientX = e.touches[0].clientX;
+                clientY = e.touches[0].clientY;
             } else {
-                x = (e.clientX - rect.left) * scaleX;
-                y = (e.clientY - rect.top) * scaleY;
+                clientX = e.clientX;
+                clientY = e.clientY;
             }
             
-            return { x, y };
+            const x = (clientX - rect.left) * scaleX;
+            const y = (clientY - rect.top) * scaleY;
+            
+            // Clamp to canvas boundaries
+            return { 
+                x: Math.max(0, Math.min(canvas.width, x)),
+                y: Math.max(0, Math.min(canvas.height, y))
+            };
         }
         
         // Tool functions
@@ -895,10 +929,10 @@
             document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`).classList.add('active');
         };
         
-        window.setColor = function(color) {
+        window.setColor = function(color, element) {
             currentColor = color;
             document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-            event.target.classList.add('selected');
+            element.classList.add('selected');
         };
         
         window.setShape = function(shape) {
@@ -908,15 +942,22 @@
         
         window.insertMathSymbol = function(symbol) {
             setTool('text');
-            // Insert symbol at cursor position
-            saveStroke({
-                type: 'text',
-                text: symbol,
-                x: lastX,
-                y: lastY,
-                color: currentColor,
-                timestamp: Date.now()
-            });
+            // Insert symbol at last known position
+            if (lastX && lastY) {
+                ctx.font = '24px Arial';
+                ctx.fillStyle = currentColor;
+                ctx.fillText(symbol, lastX, lastY);
+                
+                saveStroke({
+                    type: 'text',
+                    text: symbol,
+                    x: lastX,
+                    y: lastY,
+                    color: currentColor,
+                    size: 24,
+                    timestamp: Date.now()
+                });
+            }
         };
         
         // Clear canvas
@@ -924,19 +965,33 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Clear Firebase strokes
-            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
-            strokes.docs.forEach(doc => doc.ref.delete());
+            try {
+                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
+                const batch = db.batch();
+                strokes.docs.forEach(doc => {
+                    batch.delete(doc.ref);
+                });
+                await batch.commit();
+                showToast('Canvas cleared', 'success');
+            } catch (error) {
+                console.error('Error clearing canvas:', error);
+                showToast('Error clearing canvas', 'error');
+            }
         };
         
         // Redraw canvas
         async function redrawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
-                .orderBy('timestamp')
-                .get();
-            
-            strokes.forEach(doc => drawRemoteStroke(doc.data()));
+            try {
+                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                    .orderBy('timestamp')
+                    .get();
+                
+                strokes.forEach(doc => drawRemoteStroke(doc.data()));
+            } catch (error) {
+                console.error('Error redrawing canvas:', error);
+            }
         }
         
         // Take screenshot
@@ -969,7 +1024,7 @@
         
         // Toggle grid
         window.toggleGrid = function() {
-            // Implement grid overlay
+            showToast('Grid feature coming soon', 'info');
         };
         
         // Chat functions
@@ -995,6 +1050,7 @@
         
         window.handleChatKeyPress = function(e) {
             if (e.key === 'Enter') {
+                e.preventDefault();
                 sendChatMessage();
             }
         };
@@ -1006,7 +1062,7 @@
             const messageEl = document.createElement('div');
             messageEl.className = `message ${isOwn ? 'own' : ''}`;
             messageEl.innerHTML = `
-                <div class="message-sender">${message.userName}</div>
+                <div class="message-sender">${message.userName || 'Student'}</div>
                 <div class="message-text">${message.text}</div>
             `;
             
@@ -1024,7 +1080,7 @@
                 
                 // Leave Agora channel
                 if (agoraClient) {
-                    await leaveAgoraChannel(agoraClient);
+                    await agoraClient.leave();
                 }
                 
                 window.location.href = 'studyrooms.html';
@@ -1053,9 +1109,10 @@
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseleave', stopDrawing);
         
-        canvas.addEventListener('touchstart', startDrawing);
-        canvas.addEventListener('touchmove', draw);
-        canvas.addEventListener('touchend', stopDrawing);
+        canvas.addEventListener('touchstart', startDrawing, { passive: false });
+        canvas.addEventListener('touchmove', draw, { passive: false });
+        canvas.addEventListener('touchend', stopDrawing, { passive: false });
+        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
     </script>
 </body>
 </html>
