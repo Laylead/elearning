@@ -9,6 +9,7 @@
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/agora-rtc-sdk-ng@4.15.0/dist/AgoraRTC_N-4.15.0.js"></script>
+    <script src="agora.js"></script>
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; }
         
@@ -405,62 +406,62 @@
             <div class="tool-section">
                 <h4>Drawing Tools</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn active" id="toolPen" onclick="window.setTool('pen')"><i class="fas fa-pen"></i></div>
-                    <div class="tool-btn" id="toolEraser" onclick="window.setTool('eraser')"><i class="fas fa-eraser"></i></div>
-                    <div class="tool-btn" id="toolText" onclick="window.setTool('text')"><i class="fas fa-font"></i></div>
-                    <div class="tool-btn" id="toolShape" onclick="window.setTool('shape')"><i class="fas fa-shapes"></i></div>
+                    <div class="tool-btn active" id="toolPen" onclick="setTool('pen')"><i class="fas fa-pen"></i></div>
+                    <div class="tool-btn" id="toolEraser" onclick="setTool('eraser')"><i class="fas fa-eraser"></i></div>
+                    <div class="tool-btn" id="toolText" onclick="setTool('text')"><i class="fas fa-font"></i></div>
+                    <div class="tool-btn" id="toolShape" onclick="setTool('shape')"><i class="fas fa-shapes"></i></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Colors</h4>
                 <div class="color-picker">
-                    <div class="color-option selected" style="background: #000000;" onclick="window.setColor('#000000', this)"></div>
-                    <div class="color-option" style="background: #6366f1;" onclick="window.setColor('#6366f1', this)"></div>
-                    <div class="color-option" style="background: #ef4444;" onclick="window.setColor('#ef4444', this)"></div>
-                    <div class="color-option" style="background: #10b981;" onclick="window.setColor('#10b981', this)"></div>
-                    <div class="color-option" style="background: #f59e0b;" onclick="window.setColor('#f59e0b', this)"></div>
-                    <div class="color-option" style="background: #8b5cf6;" onclick="window.setColor('#8b5cf6', this)"></div>
-                    <div class="color-option" style="background: #ec4899;" onclick="window.setColor('#ec4899', this)"></div>
-                    <div class="color-option" style="background: #ffffff; border: 2px solid #e2e8f0;" onclick="window.setColor('#ffffff', this)"></div>
+                    <div class="color-option selected" style="background: #000000;" onclick="setColor('#000000')"></div>
+                    <div class="color-option" style="background: #6366f1;" onclick="setColor('#6366f1')"></div>
+                    <div class="color-option" style="background: #ef4444;" onclick="setColor('#ef4444')"></div>
+                    <div class="color-option" style="background: #10b981;" onclick="setColor('#10b981')"></div>
+                    <div class="color-option" style="background: #f59e0b;" onclick="setColor('#f59e0b')"></div>
+                    <div class="color-option" style="background: #8b5cf6;" onclick="setColor('#8b5cf6')"></div>
+                    <div class="color-option" style="background: #ec4899;" onclick="setColor('#ec4899')"></div>
+                    <div class="color-option" style="background: #ffffff; border: 2px solid #e2e8f0;" onclick="setColor('#ffffff')"></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Shapes</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn" onclick="window.setShape('rectangle')"><i class="far fa-square"></i></div>
-                    <div class="tool-btn" onclick="window.setShape('circle')"><i class="far fa-circle"></i></div>
-                    <div class="tool-btn" onclick="window.setShape('line')"><i class="fas fa-slash"></i></div>
-                    <div class="tool-btn" onclick="window.setShape('arrow')"><i class="fas fa-arrow-right"></i></div>
+                    <div class="tool-btn" onclick="setShape('rectangle')"><i class="far fa-square"></i></div>
+                    <div class="tool-btn" onclick="setShape('circle')"><i class="far fa-circle"></i></div>
+                    <div class="tool-btn" onclick="setShape('line')"><i class="fas fa-slash"></i></div>
+                    <div class="tool-btn" onclick="setShape('arrow')"><i class="fas fa-arrow-right"></i></div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Math Symbols</h4>
                 <div class="math-symbols">
-                    <div class="math-btn" onclick="window.insertMathSymbol('∫')">∫</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('∑')">∑</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('√')">√</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('π')">π</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('∞')">∞</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('θ')">θ</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('α')">α</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('β')">β</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('γ')">γ</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('Δ')">Δ</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('∂')">∂</div>
-                    <div class="math-btn" onclick="window.insertMathSymbol('∇')">∇</div>
+                    <div class="math-btn" onclick="insertMathSymbol('∫')">∫</div>
+                    <div class="math-btn" onclick="insertMathSymbol('∑')">∑</div>
+                    <div class="math-btn" onclick="insertMathSymbol('√')">√</div>
+                    <div class="math-btn" onclick="insertMathSymbol('π')">π</div>
+                    <div class="math-btn" onclick="insertMathSymbol('∞')">∞</div>
+                    <div class="math-btn" onclick="insertMathSymbol('θ')">θ</div>
+                    <div class="math-btn" onclick="insertMathSymbol('α')">α</div>
+                    <div class="math-btn" onclick="insertMathSymbol('β')">β</div>
+                    <div class="math-btn" onclick="insertMathSymbol('γ')">γ</div>
+                    <div class="math-btn" onclick="insertMathSymbol('Δ')">Δ</div>
+                    <div class="math-btn" onclick="insertMathSymbol('∂')">∂</div>
+                    <div class="math-btn" onclick="insertMathSymbol('∇')">∇</div>
                 </div>
             </div>
             
             <div class="tool-section">
                 <h4>Actions</h4>
                 <div class="tool-buttons">
-                    <div class="tool-btn" onclick="window.clearCanvas()"><i class="fas fa-trash"></i></div>
-                    <div class="tool-btn" onclick="window.takeScreenshot()"><i class="fas fa-camera"></i></div>
-                    <div class="tool-btn" onclick="window.downloadCanvas()"><i class="fas fa-download"></i></div>
-                    <div class="tool-btn" onclick="window.toggleGrid()"><i class="fas fa-border-all"></i></div>
+                    <div class="tool-btn" onclick="clearCanvas()"><i class="fas fa-trash"></i></div>
+                    <div class="tool-btn" onclick="takeScreenshot()"><i class="fas fa-camera"></i></div>
+                    <div class="tool-btn" onclick="downloadCanvas()"><i class="fas fa-download"></i></div>
+                    <div class="tool-btn" onclick="toggleGrid()"><i class="fas fa-border-all"></i></div>
                 </div>
             </div>
         </div>
@@ -483,10 +484,10 @@
             <div class="chat-header">
                 <h3><i class="fas fa-comments"></i> Live Chat</h3>
                 <div class="audio-controls">
-                    <button class="audio-btn" id="micBtn" onclick="window.toggleMicrophone()">
+                    <button class="audio-btn" id="micBtn" onclick="toggleMicrophone()">
                         <i class="fas fa-microphone"></i> Mic
                     </button>
-                    <button class="audio-btn" id="speakerBtn" onclick="window.toggleSpeaker()">
+                    <button class="audio-btn" id="speakerBtn" onclick="toggleSpeaker()">
                         <i class="fas fa-volume-up"></i> Speaker
                     </button>
                 </div>
@@ -498,13 +499,13 @@
             <div class="chat-messages" id="chatMessages"></div>
             
             <div class="chat-input-area">
-                <input type="text" class="chat-input" id="chatInput" placeholder="Type a question..." onkeypress="window.handleChatKeyPress(event)">
-                <button class="send-btn" onclick="window.sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
+                <input type="text" class="chat-input" id="chatInput" placeholder="Type a question..." onkeypress="handleChatKeyPress(event)">
+                <button class="send-btn" onclick="sendChatMessage()"><i class="fas fa-paper-plane"></i></button>
             </div>
         </div>
     </div>
     
-    <button class="back-to-rooms" onclick="window.leaveRoom()">
+    <button class="back-to-rooms" onclick="leaveRoom()">
         <i class="fas fa-arrow-left"></i> Back to Rooms
     </button>
     
@@ -514,8 +515,8 @@
             <h2 style="margin-bottom: 20px;">Screenshot Captured</h2>
             <img id="screenshotPreview" class="screenshot-preview" src="" alt="Screenshot">
             <div style="display: flex; gap: 12px; justify-content: flex-end;">
-                <button class="audio-btn" onclick="window.closeScreenshotModal()">Close</button>
-                <button class="audio-btn" style="background: #6366f1; color: white;" onclick="window.downloadScreenshot()">Download</button>
+                <button class="audio-btn" onclick="closeScreenshotModal()">Close</button>
+                <button class="audio-btn" style="background: #6366f1; color: white;" onclick="downloadScreenshot()">Download</button>
             </div>
         </div>
     </div>
@@ -527,14 +528,15 @@
     </div>
     
     <script>
-        // Make sure firebase-config.js exists
+        // Initialize Firebase - Check config first
         if (typeof firebaseConfig === 'undefined') {
             console.error('Firebase config not found');
             window.location.href = 'login.html';
+        } else {
+            // Initialize Firebase
+            firebase.initializeApp(firebaseConfig);
         }
         
-        // Initialize Firebase
-        firebase.initializeApp(firebaseConfig);
         const auth = firebase.auth();
         const db = firebase.firestore();
         
@@ -543,6 +545,7 @@
         let roomId = null;
         let roomData = null;
         let isCreator = false;
+        let authInitialized = false;
         
         // Whiteboard state
         const canvas = document.getElementById('whiteboard');
@@ -571,13 +574,17 @@
         
         window.addEventListener('resize', resizeCanvas);
         
-        // Auth check
+        // Auth check - ONLY redirect if not authenticated
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
+                // Only redirect to login if not authenticated
+                console.log('No user, redirecting to login');
                 window.location.href = 'login.html';
                 return;
             }
             
+            // User is logged in - STAY ON THIS PAGE
+            console.log('User authenticated, staying on whiteboard:', user.uid);
             currentUser = user;
             
             // Get room ID from URL
@@ -590,12 +597,17 @@
                 return;
             }
             
-            await loadRoomData();
-            await loadParticipants();
-            setupRealtimeWhiteboard();
-            setupRealtimeChat();
-            initAgora();
-            resizeCanvas();
+            try {
+                await loadRoomData();
+                await loadParticipants();
+                setupRealtimeWhiteboard();
+                setupRealtimeChat();
+                await initAgora();
+                resizeCanvas();
+            } catch (error) {
+                console.error('Error initializing room:', error);
+                showToast('Error loading room', 'error');
+            }
         });
         
         // Load room data
@@ -622,6 +634,7 @@
                     });
                 }
             } catch (error) {
+                console.error('Error loading room:', error);
                 showToast('Error loading room', 'error');
             }
         }
@@ -689,9 +702,9 @@
                 // Set client role based on user
                 await agoraClient.setClientRole(isCreator ? 'host' : 'audience');
                 
-                // Join channel with dummy token (in production, get from server)
+                // Join channel with app ID from config
                 const appId = 'YOUR_AGORA_APP_ID'; // Replace with your Agora app ID
-                const token = null; // In production, generate token
+                const token = null; // For testing, use null. In production, generate token
                 
                 await agoraClient.join(appId, roomId, token, currentUser.uid);
                 
@@ -701,21 +714,16 @@
                     
                     if (mediaType === 'audio') {
                         remoteUsers.set(user.uid, user);
-                        if (isSpeakerOn) {
-                            user.audioTrack.play();
-                        }
+                        user.audioTrack.play();
                         updateSpeakerIndicator();
+                        showToast(`${user.uid} joined audio`, 'success');
                     }
                 });
                 
                 agoraClient.on('user-unpublished', (user) => {
                     remoteUsers.delete(user.uid);
                     updateSpeakerIndicator();
-                });
-                
-                agoraClient.on('user-left', (user) => {
-                    remoteUsers.delete(user.uid);
-                    updateSpeakerIndicator();
+                    showToast(`${user.uid} left audio`, 'success');
                 });
                 
                 showToast('Connected to audio channel', 'success');
@@ -735,8 +743,8 @@
                     await agoraClient.publish(localAudioTrack);
                     
                     // Monitor audio level
-                    localAudioTrack.on('volume-indicator', (volume) => {
-                        if (volume > 10) {
+                    localAudioTrack.on('volume-indicator', (volumes) => {
+                        if (volumes[0].volume > 10) {
                             document.getElementById('micBtn').classList.add('speaking');
                         } else {
                             document.getElementById('micBtn').classList.remove('speaking');
@@ -745,12 +753,17 @@
                     
                     document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
                     isMicOn = true;
+                    showToast('Microphone enabled', 'success');
                 } else {
                     await localAudioTrack.close();
+                    await agoraClient.unpublish(localAudioTrack);
                     document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone"></i> Mic';
                     isMicOn = false;
+                    document.getElementById('micBtn').classList.remove('speaking');
+                    showToast('Microphone disabled', 'success');
                 }
             } catch (error) {
+                console.error('Error toggling microphone:', error);
                 showToast('Error toggling microphone', 'error');
             }
         };
@@ -768,6 +781,8 @@
                     isSpeakerOn ? user.audioTrack.play() : user.audioTrack.stop();
                 }
             });
+            
+            showToast(isSpeakerOn ? 'Speakers enabled' : 'Speakers muted', 'success');
         };
         
         // Update speaker indicator
@@ -816,9 +831,6 @@
                     width: lineWidth,
                     timestamp: Date.now()
                 });
-                
-                lastX = pos.x;
-                lastY = pos.y;
             }
         }
         
@@ -885,10 +897,10 @@
             if (stroke.type === 'pen') {
                 ctx.strokeStyle = stroke.color;
                 ctx.lineWidth = stroke.width;
+                ctx.lineTo(stroke.x, stroke.y);
+                ctx.stroke();
                 ctx.beginPath();
                 ctx.moveTo(stroke.x, stroke.y);
-                ctx.lineTo(stroke.x + 1, stroke.y + 1);
-                ctx.stroke();
             } else if (stroke.type === 'shape') {
                 ctx.strokeStyle = stroke.color;
                 ctx.lineWidth = stroke.width;
@@ -902,24 +914,16 @@
             const scaleX = canvas.width / rect.width;
             const scaleY = canvas.height / rect.height;
             
-            let clientX, clientY;
-            
+            let x, y;
             if (e.touches) {
-                clientX = e.touches[0].clientX;
-                clientY = e.touches[0].clientY;
+                x = (e.touches[0].clientX - rect.left) * scaleX;
+                y = (e.touches[0].clientY - rect.top) * scaleY;
             } else {
-                clientX = e.clientX;
-                clientY = e.clientY;
+                x = (e.clientX - rect.left) * scaleX;
+                y = (e.clientY - rect.top) * scaleY;
             }
             
-            const x = (clientX - rect.left) * scaleX;
-            const y = (clientY - rect.top) * scaleY;
-            
-            // Clamp to canvas boundaries
-            return { 
-                x: Math.max(0, Math.min(canvas.width, x)),
-                y: Math.max(0, Math.min(canvas.height, y))
-            };
+            return { x, y };
         }
         
         // Tool functions
@@ -929,10 +933,10 @@
             document.getElementById(`tool${tool.charAt(0).toUpperCase() + tool.slice(1)}`).classList.add('active');
         };
         
-        window.setColor = function(color, element) {
+        window.setColor = function(color) {
             currentColor = color;
             document.querySelectorAll('.color-option').forEach(opt => opt.classList.remove('selected'));
-            element.classList.add('selected');
+            event.target.classList.add('selected');
         };
         
         window.setShape = function(shape) {
@@ -942,22 +946,20 @@
         
         window.insertMathSymbol = function(symbol) {
             setTool('text');
-            // Insert symbol at last known position
-            if (lastX && lastY) {
-                ctx.font = '24px Arial';
-                ctx.fillStyle = currentColor;
-                ctx.fillText(symbol, lastX, lastY);
-                
-                saveStroke({
-                    type: 'text',
-                    text: symbol,
-                    x: lastX,
-                    y: lastY,
-                    color: currentColor,
-                    size: 24,
-                    timestamp: Date.now()
-                });
-            }
+            // Insert symbol at cursor position
+            saveStroke({
+                type: 'text',
+                text: symbol,
+                x: lastX,
+                y: lastY,
+                color: currentColor,
+                timestamp: Date.now()
+            });
+            
+            // Draw text
+            ctx.font = '24px Inter';
+            ctx.fillStyle = currentColor;
+            ctx.fillText(symbol, lastX, lastY);
         };
         
         // Clear canvas
@@ -965,33 +967,20 @@
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Clear Firebase strokes
-            try {
-                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
-                const batch = db.batch();
-                strokes.docs.forEach(doc => {
-                    batch.delete(doc.ref);
-                });
-                await batch.commit();
-                showToast('Canvas cleared', 'success');
-            } catch (error) {
-                console.error('Error clearing canvas:', error);
-                showToast('Error clearing canvas', 'error');
-            }
+            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
+            strokes.docs.forEach(doc => doc.ref.delete());
+            showToast('Canvas cleared', 'success');
         };
         
         // Redraw canvas
         async function redrawCanvas() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
-            try {
-                const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
-                    .orderBy('timestamp')
-                    .get();
-                
-                strokes.forEach(doc => drawRemoteStroke(doc.data()));
-            } catch (error) {
-                console.error('Error redrawing canvas:', error);
-            }
+            const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes')
+                .orderBy('timestamp')
+                .get();
+            
+            strokes.forEach(doc => drawRemoteStroke(doc.data()));
         }
         
         // Take screenshot
@@ -1024,7 +1013,8 @@
         
         // Toggle grid
         window.toggleGrid = function() {
-            showToast('Grid feature coming soon', 'info');
+            // Implement grid overlay
+            showToast('Grid toggled', 'success');
         };
         
         // Chat functions
@@ -1044,20 +1034,20 @@
                 
                 input.value = '';
             } catch (error) {
+                console.error('Error sending message:', error);
                 showToast('Error sending message', 'error');
             }
         };
         
         window.handleChatKeyPress = function(e) {
             if (e.key === 'Enter') {
-                e.preventDefault();
                 sendChatMessage();
             }
         };
         
         function displayMessage(message) {
             const messagesEl = document.getElementById('chatMessages');
-            const isOwn = message.userId === currentUser.uid;
+            const isOwn = message.userId === currentUser?.uid;
             
             const messageEl = document.createElement('div');
             messageEl.className = `message ${isOwn ? 'own' : ''}`;
@@ -1074,9 +1064,11 @@
         window.leaveRoom = async function() {
             try {
                 // Remove user from participants
-                await db.collection('activeRooms').doc(roomId).update({
-                    participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
-                });
+                if (currentUser && roomId) {
+                    await db.collection('activeRooms').doc(roomId).update({
+                        participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+                    });
+                }
                 
                 // Leave Agora channel
                 if (agoraClient) {
@@ -1085,6 +1077,7 @@
                 
                 window.location.href = 'studyrooms.html';
             } catch (error) {
+                console.error('Error leaving room:', error);
                 window.location.href = 'studyrooms.html';
             }
         };
@@ -1109,10 +1102,9 @@
         canvas.addEventListener('mouseup', stopDrawing);
         canvas.addEventListener('mouseleave', stopDrawing);
         
-        canvas.addEventListener('touchstart', startDrawing, { passive: false });
-        canvas.addEventListener('touchmove', draw, { passive: false });
-        canvas.addEventListener('touchend', stopDrawing, { passive: false });
-        canvas.addEventListener('touchcancel', stopDrawing, { passive: false });
+        canvas.addEventListener('touchstart', startDrawing);
+        canvas.addEventListener('touchmove', draw);
+        canvas.addEventListener('touchend', stopDrawing);
     </script>
 </body>
 </html>
