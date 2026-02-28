@@ -528,13 +528,19 @@
     </div>
     
     <script>
-        // Initialize Firebase - Check config first
+        // Initialize Firebase with error handling
         if (typeof firebaseConfig === 'undefined') {
             console.error('Firebase config not found');
-            window.location.href = 'login.html';
+            // Don't redirect immediately, show error and then redirect
+            setTimeout(() => {
+                window.location.href = 'login.html';
+            }, 2000);
         } else {
-            // Initialize Firebase
-            firebase.initializeApp(firebaseConfig);
+            try {
+                firebase.initializeApp(firebaseConfig);
+            } catch (error) {
+                console.error('Firebase init error:', error);
+            }
         }
         
         const auth = firebase.auth();
@@ -545,7 +551,7 @@
         let roomId = null;
         let roomData = null;
         let isCreator = false;
-        let authInitialized = false;
+        let authChecked = false;
         
         // Whiteboard state
         const canvas = document.getElementById('whiteboard');
@@ -574,18 +580,18 @@
         
         window.addEventListener('resize', resizeCanvas);
         
-        // Auth check - ONLY redirect if not authenticated
+        // Auth check - STAY ON PAGE if logged in
         auth.onAuthStateChanged(async (user) => {
             if (!user) {
-                // Only redirect to login if not authenticated
                 console.log('No user, redirecting to login');
                 window.location.href = 'login.html';
                 return;
             }
             
-            // User is logged in - STAY ON THIS PAGE
-            console.log('User authenticated, staying on whiteboard:', user.uid);
+            // User is logged in - STAY ON PAGE
+            console.log('User logged in, staying on whiteboard page:', user.uid);
             currentUser = user;
+            authChecked = true;
             
             // Get room ID from URL
             const urlParams = new URLSearchParams(window.location.search);
@@ -602,10 +608,10 @@
                 await loadParticipants();
                 setupRealtimeWhiteboard();
                 setupRealtimeChat();
-                await initAgora();
+                initAgora();
                 resizeCanvas();
             } catch (error) {
-                console.error('Error initializing room:', error);
+                console.error('Error loading room:', error);
                 showToast('Error loading room', 'error');
             }
         });
@@ -691,40 +697,28 @@
         // Initialize Agora
         async function initAgora() {
             try {
-                // Check if Agora is available
-                if (typeof AgoraRTC === 'undefined') {
-                    console.error('AgoraRTC not loaded');
-                    return;
-                }
-                
-                agoraClient = AgoraRTC.createClient({ mode: 'rtc', codec: 'vp8' });
+                agoraClient = initAgoraClient();
                 
                 // Set client role based on user
                 await agoraClient.setClientRole(isCreator ? 'host' : 'audience');
                 
-                // Join channel with app ID from config
-                const appId = 'YOUR_AGORA_APP_ID'; // Replace with your Agora app ID
-                const token = null; // For testing, use null. In production, generate token
-                
-                await agoraClient.join(appId, roomId, token, currentUser.uid);
+                // Join channel
+                const token = await generateAgoraToken(roomId, currentUser.uid);
+                await joinAgoraChannel(agoraClient, roomId, token, currentUser.uid);
                 
                 // Setup listeners
-                agoraClient.on('user-published', async (user, mediaType) => {
-                    await agoraClient.subscribe(user, mediaType);
-                    
-                    if (mediaType === 'audio') {
-                        remoteUsers.set(user.uid, user);
-                        user.audioTrack.play();
-                        updateSpeakerIndicator();
+                setupAgoraListeners(
+                    agoraClient,
+                    (user) => {
                         showToast(`${user.uid} joined audio`, 'success');
+                        updateSpeakerIndicator();
+                    },
+                    (user) => {
+                        showToast(`${user.uid} left audio`, 'success');
+                        remoteUsers.delete(user.uid);
+                        updateSpeakerIndicator();
                     }
-                });
-                
-                agoraClient.on('user-unpublished', (user) => {
-                    remoteUsers.delete(user.uid);
-                    updateSpeakerIndicator();
-                    showToast(`${user.uid} left audio`, 'success');
-                });
+                );
                 
                 showToast('Connected to audio channel', 'success');
             } catch (error) {
@@ -739,8 +733,8 @@
             
             try {
                 if (!isMicOn) {
-                    localAudioTrack = await AgoraRTC.createMicrophoneAudioTrack();
-                    await agoraClient.publish(localAudioTrack);
+                    localAudioTrack = await createLocalAudioTrack();
+                    await publishAudio(agoraClient, localAudioTrack);
                     
                     // Monitor audio level
                     localAudioTrack.on('volume-indicator', (volumes) => {
@@ -753,17 +747,12 @@
                     
                     document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone-slash"></i> Mute';
                     isMicOn = true;
-                    showToast('Microphone enabled', 'success');
                 } else {
                     await localAudioTrack.close();
-                    await agoraClient.unpublish(localAudioTrack);
                     document.getElementById('micBtn').innerHTML = '<i class="fas fa-microphone"></i> Mic';
                     isMicOn = false;
-                    document.getElementById('micBtn').classList.remove('speaking');
-                    showToast('Microphone disabled', 'success');
                 }
             } catch (error) {
-                console.error('Error toggling microphone:', error);
                 showToast('Error toggling microphone', 'error');
             }
         };
@@ -781,8 +770,6 @@
                     isSpeakerOn ? user.audioTrack.play() : user.audioTrack.stop();
                 }
             });
-            
-            showToast(isSpeakerOn ? 'Speakers enabled' : 'Speakers muted', 'success');
         };
         
         // Update speaker indicator
@@ -794,13 +781,10 @@
         
         // Drawing functions
         function startDrawing(e) {
-            e.preventDefault();
             drawing = true;
             const pos = getCanvasCoordinates(e);
             startX = pos.x;
             startY = pos.y;
-            lastX = pos.x;
-            lastY = pos.y;
             
             if (currentTool === 'pen') {
                 ctx.beginPath();
@@ -809,7 +793,6 @@
         }
         
         function draw(e) {
-            e.preventDefault();
             if (!drawing) return;
             
             const pos = getCanvasCoordinates(e);
@@ -834,10 +817,9 @@
             }
         }
         
-        function stopDrawing(e) {
-            e.preventDefault();
+        function stopDrawing() {
             if (drawing && currentTool === 'shape' && startX && startY) {
-                const pos = getCanvasCoordinates(e);
+                const pos = getCanvasCoordinates(event);
                 drawShape(startX, startY, pos.x, pos.y);
             }
             drawing = false;
@@ -955,11 +937,6 @@
                 color: currentColor,
                 timestamp: Date.now()
             });
-            
-            // Draw text
-            ctx.font = '24px Inter';
-            ctx.fillStyle = currentColor;
-            ctx.fillText(symbol, lastX, lastY);
         };
         
         // Clear canvas
@@ -969,7 +946,6 @@
             // Clear Firebase strokes
             const strokes = await db.collection('whiteboardDrawings').doc(roomId).collection('strokes').get();
             strokes.docs.forEach(doc => doc.ref.delete());
-            showToast('Canvas cleared', 'success');
         };
         
         // Redraw canvas
@@ -1014,7 +990,6 @@
         // Toggle grid
         window.toggleGrid = function() {
             // Implement grid overlay
-            showToast('Grid toggled', 'success');
         };
         
         // Chat functions
@@ -1034,7 +1009,6 @@
                 
                 input.value = '';
             } catch (error) {
-                console.error('Error sending message:', error);
                 showToast('Error sending message', 'error');
             }
         };
@@ -1047,12 +1021,12 @@
         
         function displayMessage(message) {
             const messagesEl = document.getElementById('chatMessages');
-            const isOwn = message.userId === currentUser?.uid;
+            const isOwn = message.userId === currentUser.uid;
             
             const messageEl = document.createElement('div');
             messageEl.className = `message ${isOwn ? 'own' : ''}`;
             messageEl.innerHTML = `
-                <div class="message-sender">${message.userName || 'Student'}</div>
+                <div class="message-sender">${message.userName}</div>
                 <div class="message-text">${message.text}</div>
             `;
             
@@ -1064,20 +1038,17 @@
         window.leaveRoom = async function() {
             try {
                 // Remove user from participants
-                if (currentUser && roomId) {
-                    await db.collection('activeRooms').doc(roomId).update({
-                        participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
-                    });
-                }
+                await db.collection('activeRooms').doc(roomId).update({
+                    participants: firebase.firestore.FieldValue.arrayRemove(currentUser.uid)
+                });
                 
                 // Leave Agora channel
                 if (agoraClient) {
-                    await agoraClient.leave();
+                    await leaveAgoraChannel(agoraClient);
                 }
                 
                 window.location.href = 'studyrooms.html';
             } catch (error) {
-                console.error('Error leaving room:', error);
                 window.location.href = 'studyrooms.html';
             }
         };
@@ -1105,6 +1076,9 @@
         canvas.addEventListener('touchstart', startDrawing);
         canvas.addEventListener('touchmove', draw);
         canvas.addEventListener('touchend', stopDrawing);
+        
+        // Expose functions globally
+        window.showToast = showToast;
     </script>
 </body>
 </html>
